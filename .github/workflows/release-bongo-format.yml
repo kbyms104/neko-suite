@@ -1,0 +1,82 @@
+name: Release Bongo Format
+
+on:
+  push:
+    tags:
+      - 'bongo-format-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 0.3.0)'
+        required: false
+        default: '0.3.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/bongo-format
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: apps/bongo-format/package.json
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/bongo-format/src-tauri -> target
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Tauri Application
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/bongo-format
+          tagName: bongo-format-v${{ inputs.version || github.ref_name }}
+          releaseName: 'Bongo Format v${{ inputs.version || github.ref_name }} 🐱'
+          releaseBody: |
+            ## 🐱 Bongo Format Release
+            
+            클립보드에 복사된 데이터를 자동 감지하여 깔끔한 서식으로 정렬해 주는 봉고캣 유틸리티 Bongo Format 릴리즈입니다!
+            - JSON: 트리 뷰, 2D 스프레드시트 테이블 뷰, Minify, Prettify, 문법 검사
+            - SQL: 예약어 대문자화 및 서브쿼리 인덴트 자동 정렬
+            - CSV: 정렬 및 실시간 검색 지원 가상화 테이블 그리드
+            - JWT: Header / Payload / Signature 분리 디코딩 및 만료 시간 진단
+            - 봉고캣 타건 애니메이션 및 기계식 키보드 Web Audio 사운드
+            
+            ### 다운로드 파일 안내:
+            - **`Bongo Format.exe`**: 🌟 **무설치 단일 실행 파일 (추천: 설치 없이 바로 실행!)**
+            - **`Bongo Format_x.x.x_x64-setup.exe`**: 설치형 인스톨러
+            - **`Bongo Format_x.x.x_x64_en-US.msi`**: Windows Installer 패키지
+          releaseDraft: false
+          prerelease: false
+
+      - name: Upload Standalone Portable Executable
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        with:
+          tag_name: bongo-format-v${{ inputs.version || github.ref_name }}
+          files: |
+            apps/bongo-format/src-tauri/target/release/bongo-format.exe

@@ -1,0 +1,35 @@
+{
+  "name": "neko-suite",
+  "version": "0.1.0",
+  "private": true,
+  "description": "🐾 Neko Suite - 4 Ultra-lightweight Cat-Themed Desktop Utilities",
+  "scripts": {
+    "dev:neko-drop": "npm --prefix apps/neko-drop run dev",
+    "build:neko-drop": "npm --prefix apps/neko-drop run build",
+    "tauri:neko-drop": "npm --prefix apps/neko-drop run tauri",
+    "build:app:neko-drop": "npm --prefix apps/neko-drop run build:app",
+    "dev:neko-punch": "npm --prefix apps/neko-punch run dev",
+    "build:neko-punch": "npm --prefix apps/neko-punch run build",
+    "tauri:neko-punch": "npm --prefix apps/neko-punch run tauri",
+    "build:app:neko-punch": "npm --prefix apps/neko-punch run build:app",
+    "dev:bongo-format": "npm --prefix apps/bongo-format run dev",
+    "build:bongo-format": "npm --prefix apps/bongo-format run build",
+    "tauri:bongo-format": "npm --prefix apps/bongo-format run tauri",
+    "build:app:bongo-format": "npm --prefix apps/bongo-format run build:app",
+    "dev:purr-focus": "npm --prefix apps/purr-focus run dev",
+    "build:purr-focus": "npm --prefix apps/purr-focus run build",
+    "tauri:purr-focus": "npm --prefix apps/purr-focus run tauri",
+    "build:app:purr-focus": "powershell -ExecutionPolicy Bypass -File ./scripts/build_purr_focus.ps1",
+    "dev:web": "npm --prefix apps/web run dev",
+    "build:web": "npm --prefix apps/web run build"
+  },
+  "keywords": [
+    "tauri",
+    "desktop-app",
+    "polars",
+    "rust",
+    "utilities"
+  ],
+  "author": "Neko Suite Team",
+  "license": "MIT"
+}

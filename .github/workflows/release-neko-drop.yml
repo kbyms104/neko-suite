@@ -1,0 +1,80 @@
+name: Release Neko Drop
+
+on:
+  push:
+    tags:
+      - 'neko-drop-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 0.1.0)'
+        required: false
+        default: '0.1.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/neko-drop
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: apps/neko-drop/package-lock.json
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/neko-drop/src-tauri -> target
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Tauri Application
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/neko-drop
+          tagName: neko-drop-v${{ inputs.version || github.ref_name }}
+          releaseName: 'Neko Drop v${{ inputs.version || github.ref_name }} 🐾'
+          releaseBody: |
+            ## 🐾 Neko Drop Release
+            
+            초고속 로컬 파일 먹방 변환기 Neko Drop 릴리즈입니다!
+            - CSV ↔ Parquet ↔ JSON ↔ XLSX 전방향 상호 변환
+            - Polars & Rust 기반 초고속 로컬 변환
+            - 귀여운 먹방 인터랙션 및 무결점 걷기 애니메이션
+            
+            ### 다운로드 파일 안내:
+            - **`Neko Drop.exe`**: 🌟 **무설치 단일 실행 파일 (추천: 설치 없이 바로 실행!)**
+            - **`Neko Drop_x.x.x_x64-setup.exe`**: 설치형 인스톨러
+            - **`Neko Drop_x.x.x_x64_en-US.msi`**: Windows Installer 패키지
+          releaseDraft: false
+          prerelease: false
+
+      - name: Upload Standalone Portable Executable
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        with:
+          tag_name: neko-drop-v${{ inputs.version || github.ref_name }}
+          files: |
+            apps/neko-drop/src-tauri/target/release/neko-drop.exe

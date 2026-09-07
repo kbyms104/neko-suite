@@ -1,0 +1,82 @@
+name: Release Purr Focus
+
+on:
+  push:
+    tags:
+      - 'purr-focus-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 0.4.0)'
+        required: false
+        default: '0.4.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/purr-focus
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: apps/purr-focus/package.json
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/purr-focus/src-tauri -> target
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Tauri Application
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/purr-focus
+          tagName: purr-focus-v${{ inputs.version || github.ref_name }}
+          releaseName: 'Purr Focus v${{ inputs.version || github.ref_name }} 🐾'
+          releaseBody: |
+            ## 🐾 Purr Focus Release
+            
+            25분 집중과 5분 휴식을 케어하고 스트레칭을 유도하는 투명 배경 데스크톱 펫 포모도로 타이머 Purr Focus 릴리즈입니다!
+            - 투명 프레임리스 윈도우 & 마우스 클릭 투과(Click-Through) 지원
+            - 25분 집중 세션(식빵 굽기/수면) ↔ 5분 휴식 세션(꾹꾹이 모션)
+            - 32Hz 저주파 골골송(Purring) Web Audio 신디사이저 탑재
+            - 거북목 방지 및 손목 스트레칭 말풍선 케어 알림
+            - 쓰다듬기(Petting) 하트 인터랙션 및 Always-on-Top 지원
+            
+            ### 다운로드 파일 안내:
+            - **`Purr Focus.exe`**: 🌟 **무설치 단일 실행 파일 (추천: 설치 없이 바로 실행!)**
+            - **`Purr Focus_x.x.x_x64-setup.exe`**: 설치형 인스톨러
+            - **`Purr Focus_x.x.x_x64_en-US.msi`**: Windows Installer 패키지
+          releaseDraft: false
+          prerelease: false
+
+      - name: Upload Standalone Portable Executable
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        with:
+          tag_name: purr-focus-v${{ inputs.version || github.ref_name }}
+          files: |
+            apps/purr-focus/src-tauri/target/release/purr-focus.exe

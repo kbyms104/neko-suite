@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Bongo Format",
+  "version": "0.3.0",
+  "identifier": "com.nekosuite.bongoformat",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1422",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Bongo Format 🐱",
+        "width": 880,
+        "height": 680,
+        "minWidth": 640,
+        "minHeight": 500,
+        "resizable": true,
+        "fullscreen": false,
+        "transparent": true,
+        "decorations": false,
+        "alwaysOnTop": false,
+        "shadow": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "copyright": "Copyright © 2026 Neko Suite Team",
+    "category": "Utility",
+    "shortDescription": "Bongo Format - Cat-themed clipboard data viewer & formatter",
+    "longDescription": "High-performance clipboard data detector, formatter, and visualizer for JSON, SQL, CSV, and JWT with animated Bongo Cat.",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
+  }
+}

@@ -1,0 +1,81 @@
+name: Release Neko Punch
+
+on:
+  push:
+    tags:
+      - 'neko-punch-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 0.2.0)'
+        required: false
+        default: '0.2.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/neko-punch
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: apps/neko-punch/package.json
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/neko-punch/src-tauri -> target
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Tauri Application
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/neko-punch
+          tagName: neko-punch-v${{ inputs.version || github.ref_name }}
+          releaseName: 'Neko Punch v${{ inputs.version || github.ref_name }} 🥊'
+          releaseBody: |
+            ## 🥊 Neko Punch Release
+            
+            점유 중인 포트를 조회하고 클릭 한 번으로 프로세스를 종료하는 시스템 트레이 유틸리티 Neko Punch 릴리즈입니다!
+            - 8080, 3000, 5173 등 충돌 포트 실시간 감지 & OS 레벨 프로세스 강제 종료
+            - '내 포트 ⭐' 사용자 정의 즐겨찾기 포트 탭
+            - 시스템 트레이 상주 및 글로벌 단축키 (Ctrl+Alt+K)
+            - 솜방망이 타격 애니메이션 & 사운드 이펙트
+            
+            ### 다운로드 파일 안내:
+            - **`Neko Punch.exe`**: 🌟 **무설치 단일 실행 파일 (추천: 설치 없이 바로 실행!)**
+            - **`Neko Punch_x.x.x_x64-setup.exe`**: 설치형 인스톨러
+            - **`Neko Punch_x.x.x_x64_en-US.msi`**: Windows Installer 패키지
+          releaseDraft: false
+          prerelease: false
+
+      - name: Upload Standalone Portable Executable
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        with:
+          tag_name: neko-punch-v${{ inputs.version || github.ref_name }}
+          files: |
+            apps/neko-punch/src-tauri/target/release/neko-punch.exe

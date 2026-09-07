@@ -1,0 +1,42 @@
+[package]
+name = "neko-drop"
+version = "0.1.0"
+description = "Neko Drop - Ultra-fast local file conversion utility powered by Polars & Tauri v2"
+authors = ["Neko Suite Team"]
+edition = "2021"
+default-run = "neko-drop"
+
+[lib]
+name = "neko_drop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.0.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.0.0", features = ["tray-icon"] }
+tauri-plugin-opener = "2.0.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+anyhow = "1.0"
+
+# High-performance Data Processing
+polars = { version = "0.45.0", default-features = false, features = [
+    "lazy",
+    "csv",
+    "parquet",
+    "json",
+    "dtype-full",
+    "strings"
+] }
+calamine = "0.26"
+csv = "1.3"
+open = "5.3"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
