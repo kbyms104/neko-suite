@@ -16,3 +16,22 @@ html, body, #root {
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
+
+[data-tauri-drag-region] {
+  app-region: drag;
+  -webkit-app-region: drag;
+}
+
+button, input, select, textarea, [data-no-drag] {
+  app-region: no-drag;
+  -webkit-app-region: no-drag;
+}
+
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
+

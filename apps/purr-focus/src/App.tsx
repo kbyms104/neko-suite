@@ -151,8 +151,29 @@ export default function App() {
     setLang((prev) => (prev === 'ko' ? 'en' : 'ko'));
   };
 
+  // Handle window drag on any empty background or non-interactive space
+  const handleWindowMouseDown = async (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button, input, select, textarea, [data-no-drag]')) return;
+    if (e.button === 0) {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core');
+        await invoke('start_drag_window');
+      } catch {
+        try {
+          const { getCurrentWindow } = await import('@tauri-apps/api/window');
+          await getCurrentWindow().startDragging();
+        } catch {}
+      }
+    }
+  };
+
   return (
-    <div className="w-screen h-screen relative flex flex-col items-center justify-between p-3 select-none overflow-hidden bg-transparent">
+    <div
+      onMouseDown={handleWindowMouseDown}
+      data-tauri-drag-region
+      className="w-screen h-screen relative flex flex-col items-center justify-between p-3 select-none overflow-hidden bg-transparent cursor-move"
+    >
       {/* 1. Top Mini Control Bar (Drag Handle, Settings, Mute) */}
       <PetMenu
         lang={lang}
@@ -168,7 +189,11 @@ export default function App() {
       />
 
       {/* 2. Middle: Speech Bubble & Interactive Cat */}
-      <div className="flex flex-col items-center justify-center my-auto">
+      <div
+        onMouseDown={handleWindowMouseDown}
+        data-tauri-drag-region
+        className="flex flex-col items-center justify-center my-auto cursor-move"
+      >
         <SpeechBubble message={speechMessage} mode={mode} />
         <DesktopPet
           mode={mode}
@@ -179,16 +204,22 @@ export default function App() {
       </div>
 
       {/* 3. Bottom: Floating Timer HUD */}
-      <TimerHUD
-        mode={mode}
-        timeLeft={timeLeft}
-        totalDuration={totalDuration}
-        isRunning={isRunning}
-        onToggleTimer={handleToggleTimer}
-        onSkipSession={handleSkipSession}
-        onResetTimer={handleResetTimer}
-        lang={lang}
-      />
+      <div data-no-drag className="w-full flex justify-center cursor-default">
+        <TimerHUD
+          mode={mode}
+          timeLeft={timeLeft}
+          totalDuration={totalDuration}
+          isRunning={isRunning}
+          onToggleTimer={handleToggleTimer}
+          onSkipSession={handleSkipSession}
+          onResetTimer={handleResetTimer}
+          onOpenSettings={() => {
+            sounds.playPop();
+            setIsSettingsOpen(true);
+          }}
+          lang={lang}
+        />
+      </div>
 
       {/* 4. Settings Modal Overlay */}
       <SettingsModal

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipForward, RotateCcw, Sparkles, Target } from 'lucide-react';
+import { Play, Pause, SkipForward, RotateCcw, Sparkles, Target, Settings } from 'lucide-react';
 import { SessionMode } from '../types';
 import { Language, translations } from '../i18n';
 import { sounds } from '../sound';
@@ -12,6 +12,7 @@ interface TimerHUDProps {
   onToggleTimer: () => void;
   onSkipSession: () => void;
   onResetTimer: () => void;
+  onOpenSettings?: () => void;
   lang: Language;
 }
 
@@ -23,6 +24,7 @@ export const TimerHUD: React.FC<TimerHUDProps> = ({
   onToggleTimer,
   onSkipSession,
   onResetTimer,
+  onOpenSettings,
   lang,
 }) => {
   const t = translations[lang];
@@ -64,9 +66,18 @@ export const TimerHUD: React.FC<TimerHUDProps> = ({
             {isBreak ? <Sparkles className="w-3.5 h-3.5" /> : <Target className="w-3.5 h-3.5" />}
           </div>
 
-          <div>
+          <div
+            onClick={() => {
+              if (onOpenSettings) {
+                sounds.playPop();
+                onOpenSettings();
+              }
+            }}
+            className={onOpenSettings ? "cursor-pointer group/timer" : ""}
+            title={onOpenSettings ? "클릭하여 집중/휴식 시간 설정 ⚙️" : undefined}
+          >
             <div className="flex items-center gap-1.5">
-              <span className="font-mono font-extrabold text-base text-white tracking-wider">
+              <span className="font-mono font-extrabold text-base text-white tracking-wider group-hover/timer:text-cat-primary transition-colors">
                 {timeFormatted}
               </span>
               <span
@@ -124,6 +135,20 @@ export const TimerHUD: React.FC<TimerHUDProps> = ({
           >
             <RotateCcw className="w-3 h-3" />
           </button>
+
+          {/* Settings Button */}
+          {onOpenSettings && (
+            <button
+              onClick={() => {
+                sounds.playPop();
+                onOpenSettings();
+              }}
+              className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-amber-300 transition-all active:scale-90"
+              title="시간 및 타이머 설정 ⚙️"
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
     </div>

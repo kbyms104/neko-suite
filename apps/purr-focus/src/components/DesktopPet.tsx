@@ -21,7 +21,7 @@ export const DesktopPet: React.FC<DesktopPetProps> = ({
   const [bounce, setBounce] = useState(false);
   const isBreak = mode === 'break';
 
-  const handlePetClick = (e: React.MouseEvent) => {
+  const handlePetMouseDown = async (e: React.MouseEvent) => {
     sounds.playMeow();
     const newHeart = { id: Date.now(), x: e.nativeEvent.offsetX };
     setHearts((prev) => [...prev, newHeart]);
@@ -31,15 +31,28 @@ export const DesktopPet: React.FC<DesktopPetProps> = ({
       setHearts((prev) => prev.filter((h) => h.id !== newHeart.id));
     }, 1200);
     onPet();
+
+    if (e.button === 0) {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core');
+        await invoke('start_drag_window');
+      } catch {
+        try {
+          const { getCurrentWindow } = await import('@tauri-apps/api/window');
+          await getCurrentWindow().startDragging();
+        } catch {}
+      }
+    }
   };
 
   return (
     <div
-      onClick={handlePetClick}
-      className={`relative w-64 h-52 cursor-pointer select-none group flex items-center justify-center transition-transform ${
+      onMouseDown={handlePetMouseDown}
+      data-tauri-drag-region
+      className={`relative w-64 h-52 cursor-move select-none group flex items-center justify-center transition-transform ${
         bounce ? 'scale-105' : ''
       }`}
-      title="고양이를 클릭하면 쓰다듬을 수 있습니다! 🐾"
+      title="고양이를 클릭하면 쓰다듬거나 드래그하여 이동할 수 있습니다! 🐾"
     >
       {/* Floating Hearts Particle Effects on Pet */}
       {hearts.map((h) => (
@@ -62,11 +75,12 @@ export const DesktopPet: React.FC<DesktopPetProps> = ({
       )}
 
       {/* High-Quality Adorable Cat Artwork (Matches Neko Drop style 1:1) */}
-      <div className="w-full h-full flex items-center justify-center p-1">
+      <div className="w-full h-full flex items-center justify-center p-1 pointer-events-none">
         <img
           src={isBreak ? catKneadImg : catSleepImg}
           alt="Purr Focus Companion"
-          className={`w-full h-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.45)] transition-transform duration-300 ${
+          draggable={false}
+          className={`w-full h-full object-contain pointer-events-none select-none filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.45)] transition-transform duration-300 ${
             isBreak ? 'animate-purr-vibrate' : 'animate-breathe'
           } group-hover:scale-105 active:scale-95`}
         />
