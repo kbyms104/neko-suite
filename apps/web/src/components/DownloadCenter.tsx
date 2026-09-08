@@ -3,6 +3,7 @@ import { Download, Check, Copy, Shield, ArrowRight, CheckCircle2, Clock, Sparkle
 import { sounds } from '../sound';
 import { useLanguage } from '../context/LanguageContext';
 import catBoxerImg from '../assets/cat_boxer.png';
+import catSitImg from '../assets/cat_sit.png';
 
 type DownloadApp = 'purr' | 'bongo' | 'punch' | 'drop';
 
@@ -122,8 +123,31 @@ export const DownloadCenter: React.FC = () => {
                       : 'bg-gradient-to-tr from-cat-primary to-cat-accent shadow-cat-primary/30'
                   }`}>
                     {selectedApp === 'punch' ? (
-                      <img src={catBoxerImg} alt="Boxer Cat" className="w-full h-full object-contain" />
-                    ) : selectedApp === 'purr' ? '🐾' : selectedApp === 'bongo' ? '🐱' : '🐟'}
+                      <img src={catBoxerImg} alt="Boxer Cat" className="w-full h-full object-contain filter drop-shadow" />
+                    ) : selectedApp === 'drop' ? (
+                      <img src={catSitImg} alt="Neko Drop" className="w-full h-full object-contain filter drop-shadow" />
+                    ) : selectedApp === 'purr' ? (
+                      <svg viewBox="0 0 160 140" className="w-full h-full drop-shadow p-0.5">
+                        <ellipse cx="80" cy="115" rx="65" ry="16" fill="#ffb4c2" opacity="0.4" />
+                        <ellipse cx="80" cy="85" rx="46" ry="32" fill="#ffffff" stroke="#3a3c4f" strokeWidth="4" />
+                        <circle cx="80" cy="52" r="30" fill="#ffffff" stroke="#3a3c4f" strokeWidth="4" />
+                        <polygon points="56,40 42,15 70,26" fill="#ffb4c2" stroke="#3a3c4f" strokeWidth="3" />
+                        <polygon points="104,40 118,15 90,26" fill="#ffb4c2" stroke="#3a3c4f" strokeWidth="3" />
+                        <line x1="64" y1="48" x2="76" y2="48" stroke="#3a3c4f" strokeWidth="3.5" strokeLinecap="round" />
+                        <line x1="84" y1="48" x2="96" y2="48" stroke="#3a3c4f" strokeWidth="3.5" strokeLinecap="round" />
+                        <polygon points="80,56 77,59 83,59" fill="#ff9fb2" />
+                      </svg>
+                    ) : (
+                      <svg viewBox="0 0 100 80" className="w-full h-full drop-shadow p-0.5">
+                        <polygon points="26,24 16,6 36,14" fill="#ffffff" stroke="#2b2d3b" strokeWidth="3" />
+                        <polygon points="74,24 84,6 64,14" fill="#ffffff" stroke="#2b2d3b" strokeWidth="3" />
+                        <ellipse cx="50" cy="34" rx="30" ry="24" fill="#ffffff" stroke="#2b2d3b" strokeWidth="3" />
+                        <ellipse cx="38" cy="30" rx="3.5" ry="4.5" fill="#2b2d3b" />
+                        <ellipse cx="62" cy="30" rx="3.5" ry="4.5" fill="#2b2d3b" />
+                        <polygon points="50,35 48,37 52,37" fill="#ff9fb2" />
+                        <rect x="20" y="58" width="60" height="18" rx="4" fill="#2c2d3d" stroke="#43465d" strokeWidth="2" />
+                      </svg>
+                    )}
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-white font-brand">

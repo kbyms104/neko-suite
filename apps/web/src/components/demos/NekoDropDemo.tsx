@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Download, Sparkles, CheckCircle2, RefreshCw } from 'lucide-react';
 import { sounds } from '../../sound';
 import { useLanguage } from '../../context/LanguageContext';
@@ -19,13 +19,25 @@ const SAMPLE_FILES: SampleFile[] = [
   { name: 'sales_report.xlsx', from: 'XLSX', to: 'PARQUET', size: '32 MB → 5 MB' },
 ];
 
+const TOTAL_WALK_FRAMES = 87;
+
 export const NekoDropDemo: React.FC = () => {
   const { t } = useLanguage();
   const [state, setState] = useState<'IDLE' | 'EATING' | 'SUCCESS'>('IDLE');
   const [activeFile, setActiveFile] = useState<SampleFile | null>(null);
   const [chew, setChew] = useState<0 | 1>(0);
+  const [frameIdx, setFrameIdx] = useState(0);
 
   const chewIntervalRef = useRef<number | null>(null);
+
+  // 대기 상태 시 실제 프로그램처럼 87프레임 걷기 애니메이션 실행
+  useEffect(() => {
+    if (state !== 'IDLE') return;
+    const interval = window.setInterval(() => {
+      setFrameIdx((prev) => (prev + 1) % TOTAL_WALK_FRAMES);
+    }, 83);
+    return () => clearInterval(interval);
+  }, [state]);
 
   const runSimulation = (file: SampleFile) => {
     if (state === 'EATING') return;
@@ -67,7 +79,7 @@ export const NekoDropDemo: React.FC = () => {
         </div>
 
         <a
-          href="/downloads/Neko Drop.exe"
+          href="./downloads/Neko Drop.exe"
           download="Neko Drop.exe"
           onClick={() => sounds.playSuccess()}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cat-primary hover:bg-cat-primaryHover text-gray-950 font-bold text-sm shadow-md shadow-cat-primary/20 transition-all active:scale-95"
@@ -110,9 +122,12 @@ export const NekoDropDemo: React.FC = () => {
               <div className="w-28 h-28 relative flex items-center justify-center mb-2">
                 {state === 'IDLE' && (
                   <img
-                    src={catSitImg}
-                    alt="Cat Sitting"
+                    src={`./cat_walk_frames/f_${String(frameIdx).padStart(3, '0')}.png`}
+                    alt="Cat Walking"
                     className="w-full h-full object-contain filter drop-shadow-md"
+                    onError={(e) => {
+                      e.currentTarget.src = catSitImg;
+                    }}
                   />
                 )}
                 {state === 'EATING' && (

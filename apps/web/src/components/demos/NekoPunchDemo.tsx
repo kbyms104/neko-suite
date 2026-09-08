@@ -4,6 +4,7 @@ import { sounds } from '../../sound';
 import { useLanguage } from '../../context/LanguageContext';
 import catPawImg from '../../assets/cat_paw.png';
 import catBoxerImg from '../../assets/cat_boxer.png';
+import catSleepImg from '../../assets/cat_sleep.png';
 
 interface ProcessItem {
   id: string;
@@ -26,6 +27,19 @@ export const NekoPunchDemo: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'custom'>('all');
   const [customPorts, setCustomPorts] = useState<number[]>([3000, 8080]);
   const [punchedId, setPunchedId] = useState<string | null>(null);
+
+  const aliveCount = processes.filter((p) => p.status !== 'dead').length;
+  const currentCatImg = punchedId ? catPawImg : aliveCount === 0 ? catSleepImg : catBoxerImg;
+  const statusBadge = punchedId
+    ? '💥 냥펀치!'
+    : aliveCount === 0
+    ? '💤 낮잠 중'
+    : '👀 감시 중';
+  const badgeColor = punchedId
+    ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+    : aliveCount === 0
+    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+    : 'bg-amber-500/20 text-amber-400 border-amber-500/30';
 
   const togglePin = (port: number) => {
     sounds.playPop();
@@ -66,18 +80,18 @@ export const NekoPunchDemo: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-cat-border">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#202230] to-[#2a2d40] border border-cat-border p-1 shadow-md shrink-0">
-            <img src={catBoxerImg} alt="Boxer Cat" className="w-full h-full object-contain" />
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#202230] to-[#2a2d40] border border-cat-border p-1 shadow-md shrink-0 flex items-center justify-center">
+            <img src={currentCatImg} alt="Boxer Cat" className="w-full h-full object-contain filter drop-shadow" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-white font-brand">{t.nekoPunch.title}</span>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                {t.nekoPunch.badge}
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${badgeColor}`}>
+                {statusBadge}
               </span>
             </div>
             <p className="text-sm text-gray-400 mt-1">
-              {t.nekoPunch.subtitle}
+              {aliveCount === 0 ? '포트 충돌 없음 • 평화로운 낮잠 중' : t.nekoPunch.subtitle}
             </p>
           </div>
         </div>
@@ -92,7 +106,7 @@ export const NekoPunchDemo: React.FC = () => {
           </button>
 
           <a
-            href="/downloads/Neko Punch.exe"
+            href="./downloads/Neko Punch.exe"
             download="Neko Punch.exe"
             onClick={() => sounds.playSuccess()}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-gray-950 font-bold text-sm shadow-md shadow-amber-500/20 transition-all active:scale-95"

@@ -94,7 +94,7 @@ export const Navbar: React.FC<NavbarProps> = ({ isMuted, onToggleSound }) => {
 
           {/* GitHub Link */}
           <a
-            href="https://github.com"
+            href="https://github.com/kbyms104/neko-suite"
             target="_blank"
             rel="noopener noreferrer"
             className="p-2.5 rounded-xl bg-cat-card border border-cat-border text-gray-300 hover:text-white hover:border-white/30 transition-all hidden sm:flex items-center justify-center"
@@ -105,7 +105,7 @@ export const Navbar: React.FC<NavbarProps> = ({ isMuted, onToggleSound }) => {
 
           {/* Quick Download Button */}
           <a
-            href="/downloads/Neko Drop.exe"
+            href="./downloads/Neko Drop.exe"
             download="Neko Drop.exe"
             onClick={() => sounds.playSuccess()}
             className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-cat-primary to-orange-500 hover:from-cat-primaryHover hover:to-orange-400 text-gray-950 font-bold text-sm shadow-lg shadow-cat-primary/25 hover:shadow-cat-primary/40 transition-all transform active:scale-95"

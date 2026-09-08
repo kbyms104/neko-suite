@@ -106,7 +106,7 @@ export const BongoFormatDemo: React.FC = () => {
         <div className="flex items-center gap-2">
           {/* Direct Download Button */}
           <a
-            href="/downloads/Bongo Format.exe"
+            href="./downloads/Bongo Format.exe"
             download="Bongo Format.exe"
             onClick={() => sounds.playSuccess()}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-purple-500/20 transition-all active:scale-95"
@@ -193,7 +193,7 @@ export const BongoFormatDemo: React.FC = () => {
               <div
                 onClick={handleCatClick}
                 title="클릭하면 솜방망이를 두드립니다!"
-                className="w-16 h-16 rounded-2xl bg-[#1f212f] border border-purple-500/30 shadow-inner flex items-center justify-center relative cursor-pointer group hover:border-purple-400 transition-all active:scale-95 overflow-hidden"
+                className="w-20 h-16 rounded-2xl bg-[#1f212f] border border-purple-500/30 shadow-inner flex items-center justify-center relative cursor-pointer group hover:border-purple-400 transition-all active:scale-95 overflow-hidden shrink-0"
               >
                 {showHeart && (
                   <span className="absolute -top-1 text-xs animate-bounce select-none pointer-events-none z-20">
@@ -202,12 +202,27 @@ export const BongoFormatDemo: React.FC = () => {
                 )}
 
                 <svg viewBox="0 0 100 80" className="w-full h-full p-1 drop-shadow-md">
+                  <defs>
+                    <linearGradient id="bongoBodyGradWeb" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#ffffff" />
+                      <stop offset="100%" stopColor="#f3f0e8" />
+                    </linearGradient>
+                    <linearGradient id="bongoKbGradWeb" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#2c2d3d" />
+                      <stop offset="100%" stopColor="#1e1f2b" />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Ears */}
                   <polygon points="26,24 16,6 36,14" fill="#ffffff" stroke="#2b2d3b" strokeWidth="2.5" />
                   <polygon points="25,21 19,10 33,16" fill="#ffb4c2" />
                   <polygon points="74,24 84,6 64,14" fill="#ffffff" stroke="#2b2d3b" strokeWidth="2.5" />
                   <polygon points="75,21 81,10 67,16" fill="#ffb4c2" />
-                  <ellipse cx="50" cy="34" rx="30" ry="24" fill="#ffffff" stroke="#2b2d3b" strokeWidth="2.5" />
 
+                  {/* Head */}
+                  <ellipse cx="50" cy="34" rx="30" ry="24" fill="url(#bongoBodyGradWeb)" stroke="#2b2d3b" strokeWidth="2.5" />
+
+                  {/* Eyes */}
                   {isTyping ? (
                     <>
                       <path d="M 36 30 Q 41 26 46 30" fill="none" stroke="#2b2d3b" strokeWidth="2.5" strokeLinecap="round" />
@@ -222,13 +237,24 @@ export const BongoFormatDemo: React.FC = () => {
                     </>
                   )}
 
+                  {/* Pink Nose & Cute Mouth */}
                   <polygon points="50,35 48,37 52,37" fill="#ff9fb2" />
                   <path d="M 46 39 Q 50 43 50 38 Q 50 43 54 39" fill="none" stroke="#2b2d3b" strokeWidth="1.8" strokeLinecap="round" />
+
+                  {/* Blush Cheek Circles */}
                   <circle cx="31" cy="36" r="3.5" fill="#ffb4c2" opacity="0.6" />
                   <circle cx="69" cy="36" r="3.5" fill="#ffb4c2" opacity="0.6" />
 
-                  <rect x="20" y="58" width="60" height="18" rx="4" fill="#2c2d3d" stroke="#43465d" strokeWidth="1.5" />
+                  {/* Whiskers */}
+                  <line x1="22" y1="33" x2="10" y2="31" stroke="#2b2d3b" strokeWidth="1.5" strokeLinecap="round" />
+                  <line x1="22" y1="37" x2="11" y2="39" stroke="#2b2d3b" strokeWidth="1.5" strokeLinecap="round" />
+                  <line x1="78" y1="33" x2="90" y2="31" stroke="#2b2d3b" strokeWidth="1.5" strokeLinecap="round" />
+                  <line x1="78" y1="37" x2="89" y2="39" stroke="#2b2d3b" strokeWidth="1.5" strokeLinecap="round" />
+
+                  {/* Mechanical Keyboard */}
+                  <rect x="20" y="58" width="60" height="18" rx="4" fill="url(#bongoKbGradWeb)" stroke="#43465d" strokeWidth="1.5" />
                   <line x1="26" y1="64" x2="74" y2="64" stroke="#a78bfa" strokeWidth="2.5" strokeDasharray="3 2" strokeLinecap="round" />
+                  <line x1="28" y1="70" x2="72" y2="70" stroke="#f6a354" strokeWidth="2.5" strokeDasharray="4 2" strokeLinecap="round" />
 
                   {/* Left Paw */}
                   <g transform={bongoPaw === 'left' ? 'translate(0, 6)' : 'translate(0, 0)'} className="transition-transform duration-75">

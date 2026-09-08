@@ -30,8 +30,28 @@ export default {
         'pop-hearts': 'popHearts 1.8s ease-in-out forwards',
         'float': 'float 4s ease-in-out infinite',
         'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+        'knead-left': 'kneadLeft 1.2s infinite ease-in-out',
+        'knead-right': 'kneadRight 1.2s infinite ease-in-out',
+        'purr-vibrate': 'purrVibrate 0.15s infinite alternate',
+        'breathe': 'breathe 4s infinite ease-in-out',
       },
       keyframes: {
+        kneadLeft: {
+          '0%, 100%': { transform: 'translateY(0) scale(1)' },
+          '50%': { transform: 'translateY(4px) scale(1.12)' },
+        },
+        kneadRight: {
+          '0%, 100%': { transform: 'translateY(4px) scale(1.12)' },
+          '50%': { transform: 'translateY(0) scale(1)' },
+        },
+        purrVibrate: {
+          '0%': { transform: 'translate(0, 0)' },
+          '100%': { transform: 'translate(0.5px, -0.5px)' },
+        },
+        breathe: {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.025)' },
+        },
         wiggle: {
           '0%, 100%': { transform: 'rotate(-3deg)' },
           '50%': { transform: 'rotate(3deg)' },

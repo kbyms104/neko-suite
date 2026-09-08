@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, Sparkles, ShieldCheck, Zap, Cpu, ArrowRight } from 'lucide-react';
 import { sounds } from '../sound';
 import { useLanguage } from '../context/LanguageContext';
+import catSitImg from '../assets/cat_sit.png';
 
 const TOTAL_FRAMES = 87;
 
@@ -10,6 +11,14 @@ export const Hero: React.FC = () => {
   const [frameIdx, setFrameIdx] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [meowCount, setMeowCount] = useState(0);
+
+  // 프레임 프리로딩
+  useEffect(() => {
+    for (let i = 0; i < TOTAL_FRAMES; i++) {
+      const img = new Image();
+      img.src = `./cat_walk_frames/f_${String(i).padStart(3, '0')}.png`;
+    }
+  }, []);
 
   // 12fps 걷기 루프
   useEffect(() => {
@@ -55,7 +64,7 @@ export const Hero: React.FC = () => {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
             <a
-              href="/downloads/Neko Drop.exe"
+              href="./downloads/Neko Drop.exe"
               download="Neko Drop.exe"
               onClick={() => sounds.playSuccess()}
               className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-cat-primary via-orange-500 to-cat-accent text-gray-950 font-bold text-base shadow-xl shadow-cat-primary/25 hover:shadow-cat-primary/40 hover:scale-[1.02] active:scale-95 transition-all group"
@@ -154,11 +163,11 @@ export const Hero: React.FC = () => {
                 {/* Smooth Loop Cat Walking Animation */}
                 <div className="w-44 h-44 sm:w-52 sm:h-52 rounded-2xl flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105 active:scale-95">
                   <img
-                    src={`/cat_walk_frames/f_${String(frameIdx).padStart(3, '0')}.png`}
+                    src={`./cat_walk_frames/f_${String(frameIdx).padStart(3, '0')}.png`}
                     alt="Walking Neko"
                     className="w-full h-full object-contain filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]"
                     onError={(e) => {
-                      e.currentTarget.src = '/src/assets/cat_sit.png';
+                      e.currentTarget.src = catSitImg;
                     }}
                   />
                 </div>
