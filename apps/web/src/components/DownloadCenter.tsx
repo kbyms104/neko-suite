@@ -4,6 +4,7 @@ import { sounds } from '../sound';
 import { useLanguage } from '../context/LanguageContext';
 import catBoxerImg from '../assets/cat_boxer.png';
 import catSitImg from '../assets/cat_sit.png';
+import purrCatSleepImg from '../assets/purr/cat_sleep.png';
 
 type DownloadApp = 'purr' | 'bongo' | 'punch' | 'drop';
 
@@ -127,16 +128,7 @@ export const DownloadCenter: React.FC = () => {
                     ) : selectedApp === 'drop' ? (
                       <img src={catSitImg} alt="Neko Drop" className="w-full h-full object-contain filter drop-shadow" />
                     ) : selectedApp === 'purr' ? (
-                      <svg viewBox="0 0 160 140" className="w-full h-full drop-shadow p-0.5">
-                        <ellipse cx="80" cy="115" rx="65" ry="16" fill="#ffb4c2" opacity="0.4" />
-                        <ellipse cx="80" cy="85" rx="46" ry="32" fill="#ffffff" stroke="#3a3c4f" strokeWidth="4" />
-                        <circle cx="80" cy="52" r="30" fill="#ffffff" stroke="#3a3c4f" strokeWidth="4" />
-                        <polygon points="56,40 42,15 70,26" fill="#ffb4c2" stroke="#3a3c4f" strokeWidth="3" />
-                        <polygon points="104,40 118,15 90,26" fill="#ffb4c2" stroke="#3a3c4f" strokeWidth="3" />
-                        <line x1="64" y1="48" x2="76" y2="48" stroke="#3a3c4f" strokeWidth="3.5" strokeLinecap="round" />
-                        <line x1="84" y1="48" x2="96" y2="48" stroke="#3a3c4f" strokeWidth="3.5" strokeLinecap="round" />
-                        <polygon points="80,56 77,59 83,59" fill="#ff9fb2" />
-                      </svg>
+                      <img src={purrCatSleepImg} alt="Purr Focus" className="w-full h-full object-contain filter drop-shadow" />
                     ) : (
                       <svg viewBox="0 0 100 80" className="w-full h-full drop-shadow p-0.5">
                         <polygon points="26,24 16,6 36,14" fill="#ffffff" stroke="#2b2d3b" strokeWidth="3" />

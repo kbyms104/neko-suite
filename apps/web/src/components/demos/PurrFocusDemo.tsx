@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, Clock, Heart, Coffee, MousePointer, Play, Pause, RotateCcw, SkipForward, Download, CheckCircle2 } from 'lucide-react';
 import { sounds } from '../../sound';
 import { useLanguage } from '../../context/LanguageContext';
+import catSleepImg from '../../assets/purr/cat_sleep.png';
+import catKneadImg from '../../assets/purr/cat_knead.png';
 
 export const PurrFocusDemo: React.FC = () => {
   const { t, lang } = useLanguage();
@@ -167,10 +169,10 @@ export const PurrFocusDemo: React.FC = () => {
               </span>
             </div>
 
-            {/* Interactive Desktop Pet Character (1:1 with DesktopPet.tsx) */}
+            {/* Interactive Desktop Pet Character (1:1 with DesktopPet) */}
             <div
               onClick={handlePetCat}
-              className="relative w-60 h-48 cursor-pointer select-none group flex items-center justify-center"
+              className="relative w-64 h-52 cursor-pointer select-none group flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
               title="고양이를 클릭하면 야옹 소리와 함께 골골송을 부릅니다!"
             >
               {/* Floating Hearts Particle Effects on Pet */}
@@ -180,113 +182,25 @@ export const PurrFocusDemo: React.FC = () => {
                 </div>
               )}
 
-              {/* Floating zZZ particles in Focus Sleeping mode */}
+              {/* Floating zZZ bubbles in Focus Sleeping mode */}
               {mode === 'FOCUS' && (
-                <div className="absolute top-4 right-10 flex flex-col items-center pointer-events-none select-none z-20">
+                <div className="absolute top-2 right-8 flex flex-col items-center pointer-events-none select-none z-20">
                   <span className="text-xs font-mono font-bold text-pink-300 animate-pulse">z</span>
                   <span className="text-sm font-mono font-bold text-pink-300/80 -mt-1 ml-3 animate-pulse delay-75">Z</span>
                   <span className="text-base font-mono font-bold text-pink-300/60 -mt-1 ml-6 animate-pulse delay-150">Z</span>
                 </div>
               )}
 
-              {/* Cat SVG Graphics */}
-              <svg
-                viewBox="0 0 160 140"
-                className={`w-full h-full drop-shadow-[0_12px_24px_rgba(0,0,0,0.5)] transition-transform ${
-                  mode === 'REST' || isPurring ? 'animate-purr-vibrate' : 'animate-breathe'
-                } group-hover:scale-105 active:scale-95`}
-              >
-                <defs>
-                  <linearGradient id="furGradDemo" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#ffffff" />
-                    <stop offset="100%" stopColor="#f7f3ea" />
-                  </linearGradient>
-                  <linearGradient id="matGradDemo" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#ffb4c2" />
-                    <stop offset="100%" stopColor="#f6a354" />
-                  </linearGradient>
-                </defs>
-
-                {/* Soft Cushion Mat under Cat */}
-                <ellipse cx="80" cy="115" rx="65" ry="16" fill="url(#matGradDemo)" opacity="0.4" />
-
-                {/* Cat Tail */}
-                <path
-                  d="M 125 95 C 145 90 150 70 140 60 C 135 55 130 65 132 75 C 130 85 120 95 110 100"
-                  fill="none"
-                  stroke="#e8e2d5"
-                  strokeWidth="8"
-                  strokeLinecap="round"
-                  className="transition-transform duration-500 origin-bottom"
+              {/* High-Quality Adorable Cat Artwork (Matches Neko Drop style 1:1) */}
+              <div className="w-full h-full flex items-center justify-center p-1">
+                <img
+                  src={mode === 'REST' || isPurring ? catKneadImg : catSleepImg}
+                  alt="Purr Focus Companion"
+                  className={`w-full h-full object-contain filter drop-shadow-[0_14px_28px_rgba(0,0,0,0.5)] transition-transform duration-300 ${
+                    mode === 'REST' || isPurring ? 'animate-purr-vibrate' : 'animate-breathe'
+                  }`}
                 />
-
-                {/* Cat Body (Round Loaf) */}
-                <ellipse cx="80" cy="85" rx="46" ry="32" fill="url(#furGradDemo)" stroke="#3a3c4f" strokeWidth="2.5" />
-
-                {/* Head */}
-                <circle cx="80" cy="52" r="30" fill="url(#furGradDemo)" stroke="#3a3c4f" strokeWidth="2.5" />
-
-                {/* Ears */}
-                {/* Left Ear */}
-                <polygon points="56,40 42,15 70,26" fill="#ffffff" stroke="#3a3c4f" strokeWidth="2.5" strokeLinejoin="round" />
-                <polygon points="56,37 46,20 67,27" fill="#ffb4c2" />
-
-                {/* Right Ear */}
-                <polygon points="104,40 118,15 90,26" fill="#ffffff" stroke="#3a3c4f" strokeWidth="2.5" strokeLinejoin="round" />
-                <polygon points="104,37 114,20 93,27" fill="#ffb4c2" />
-
-                {/* Eyes */}
-                {mode === 'REST' || isPurring ? (
-                  // Happy Squinting Eyes during Kneading / Break (^ ^)
-                  <>
-                    <path d="M 64 48 Q 70 42 76 48" fill="none" stroke="#3a3c4f" strokeWidth="2.5" strokeLinecap="round" />
-                    <path d="M 84 48 Q 90 42 96 48" fill="none" stroke="#3a3c4f" strokeWidth="2.5" strokeLinecap="round" />
-                  </>
-                ) : (
-                  // Sleeping Calm Closed Eyes (- -)
-                  <>
-                    <line x1="64" y1="48" x2="76" y2="48" stroke="#3a3c4f" strokeWidth="2.5" strokeLinecap="round" />
-                    <line x1="84" y1="48" x2="96" y2="48" stroke="#3a3c4f" strokeWidth="2.5" strokeLinecap="round" />
-                  </>
-                )}
-
-                {/* Pink Nose & Mouth */}
-                <polygon points="80,56 77,59 83,59" fill="#ff9fb2" />
-                <path d="M 75 62 Q 80 66 80 60 Q 80 66 85 62" fill="none" stroke="#3a3c4f" strokeWidth="2" strokeLinecap="round" />
-
-                {/* Pink Blush Cheeks */}
-                <circle cx="60" cy="56" r="4.5" fill="#ffb4c2" opacity="0.75" />
-                <circle cx="100" cy="56" r="4.5" fill="#ffb4c2" opacity="0.75" />
-
-                {/* Whiskers */}
-                <line x1="52" y1="52" x2="36" y2="50" stroke="#3a3c4f" strokeWidth="1.5" strokeLinecap="round" />
-                <line x1="52" y1="58" x2="38" y2="60" stroke="#3a3c4f" strokeWidth="1.5" strokeLinecap="round" />
-                <line x1="108" y1="52" x2="124" y2="50" stroke="#3a3c4f" strokeWidth="1.5" strokeLinecap="round" />
-                <line x1="108" y1="58" x2="122" y2="60" stroke="#3a3c4f" strokeWidth="1.5" strokeLinecap="round" />
-
-                {/* Paws */}
-                {mode === 'REST' || isPurring ? (
-                  // Kneading Paws (꾹꾹이)
-                  <>
-                    <g className="animate-knead-left origin-center">
-                      <ellipse cx="66" cy="104" rx="8" ry="7" fill="#ffffff" stroke="#3a3c4f" strokeWidth="2" />
-                      <ellipse cx="66" cy="105" rx="4" ry="3" fill="#ffb4c2" />
-                    </g>
-                    <g className="animate-knead-right origin-center">
-                      <ellipse cx="94" cy="104" rx="8" ry="7" fill="#ffffff" stroke="#3a3c4f" strokeWidth="2" />
-                      <ellipse cx="94" cy="105" rx="4" ry="3" fill="#ffb4c2" />
-                    </g>
-                  </>
-                ) : (
-                  // Loafing Tucked Paws (식빵 굽기)
-                  <>
-                    <ellipse cx="68" cy="102" rx="9" ry="6" fill="#ffffff" stroke="#3a3c4f" strokeWidth="2" />
-                    <ellipse cx="68" cy="103" rx="4" ry="2.5" fill="#ffb4c2" />
-                    <ellipse cx="92" cy="102" rx="9" ry="6" fill="#ffffff" stroke="#3a3c4f" strokeWidth="2" />
-                    <ellipse cx="92" cy="103" rx="4" ry="2.5" fill="#ffb4c2" />
-                  </>
-                )}
-              </svg>
+              </div>
 
               {/* Purr Sound Indicator */}
               {isPurring && (
