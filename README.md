@@ -91,7 +91,8 @@ npm run dev:web              # 쇼케이스 웹 (http://localhost:5174)
 
 Neko Suite 4종 앱을 한곳에서 살펴보고, 브라우저 인터랙티브 시뮬레이터 체험 및 최신 포터블 바이너리를 다운로드할 수 있는 공식 쇼케이스 웹사이트입니다.
 
-- **개발 서버 실행**: `npm run dev:web` (접속: `http://localhost:5174`)
+- 🔗 **온라인 웹사이트 바로가기**: **[https://kbyms104.github.io/neko-suite/](https://kbyms104.github.io/neko-suite/)**
+- **로컬 개발 서버 실행**: `npm run dev:web` (접속: `http://localhost:5174`)
 - **프로덕션 빌드**: `npm run build:web`
 - **핵심 기능**:
   - 🐟 **Neko Drop**: 브라우저 파일 드롭 & 변환 인터랙션 미리보기 및 `.exe` 다운로드
