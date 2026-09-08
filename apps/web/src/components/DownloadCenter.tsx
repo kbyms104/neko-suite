@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Check, Copy, Shield, ArrowRight, CheckCircle2, Clock } from 'lucide-react';
+import { Download, Check, Copy, Shield, ArrowRight, CheckCircle2, Clock, Sparkles } from 'lucide-react';
 import { sounds } from '../sound';
 import { useLanguage } from '../context/LanguageContext';
 import catBoxerImg from '../assets/cat_boxer.png';
@@ -245,95 +245,120 @@ export const DownloadCenter: React.FC = () => {
             </div>
           </div>
 
-          {/* Right: Roadmap Timeline */}
+          {/* Right: All 4 Utilities Lineup List */}
           <div className="lg:col-span-5 rounded-3xl glass-panel p-6 sm:p-8 flex flex-col justify-between">
             <div>
               <h3 className="text-base font-bold text-white mb-1 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-cat-primary" />
+                <Sparkles className="w-4 h-4 text-cat-primary" />
                 <span>{t.download.roadmapTitle}</span>
               </h3>
-              <p className="text-xs text-gray-400 mb-6">
+              <p className="text-xs text-gray-400 mb-5">
                 {t.download.roadmapSubtitle}
               </p>
 
-              <div className="space-y-4 relative before:absolute before:inset-y-0 before:left-3.5 before:w-0.5 before:bg-cat-border">
-                {/* Step 1: Neko Drop */}
-                <div className="relative flex items-start gap-4">
-                  <div className="w-7 h-7 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-xs font-bold text-emerald-400 z-10 shrink-0">
-                    ✓
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-emerald-400">{t.download.step1Title}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono">
-                        {t.download.step1Badge}
-                      </span>
+              <div className="space-y-3">
+                {[
+                  {
+                    id: 'purr' as const,
+                    icon: '🐾',
+                    color: 'from-pink-500/20 to-rose-500/20 border-pink-500/30 text-pink-400',
+                    btnColor: 'hover:bg-pink-500 hover:text-white',
+                    title: t.download.step4Title,
+                    size: t.download.step4Badge,
+                    desc: t.download.step4Desc,
+                    fileName: 'Purr Focus.exe',
+                    href: './downloads/Purr Focus.exe',
+                  },
+                  {
+                    id: 'bongo' as const,
+                    icon: '🐱',
+                    color: 'from-purple-500/20 to-indigo-500/20 border-purple-500/30 text-purple-400',
+                    btnColor: 'hover:bg-purple-500 hover:text-white',
+                    title: t.download.step3Title,
+                    size: t.download.step3Badge,
+                    desc: t.download.step3Desc,
+                    fileName: 'Bongo Format.exe',
+                    href: './downloads/Bongo Format.exe',
+                  },
+                  {
+                    id: 'punch' as const,
+                    icon: '🥊',
+                    color: 'from-amber-500/20 to-orange-500/20 border-amber-500/30 text-amber-400',
+                    btnColor: 'hover:bg-amber-500 hover:text-gray-950',
+                    title: t.download.step2Title,
+                    size: t.download.step2Badge,
+                    desc: t.download.step2Desc,
+                    fileName: 'Neko Punch.exe',
+                    href: './downloads/Neko Punch.exe',
+                  },
+                  {
+                    id: 'drop' as const,
+                    icon: '🐟',
+                    color: 'from-cyan-500/20 to-blue-500/20 border-cyan-500/30 text-cyan-400',
+                    btnColor: 'hover:bg-cat-primary hover:text-gray-950',
+                    title: t.download.step1Title,
+                    size: t.download.step1Badge,
+                    desc: t.download.step1Desc,
+                    fileName: 'Neko Drop.exe',
+                    href: './downloads/Neko Drop.exe',
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => {
+                      setSelectedApp(item.id);
+                      sounds.playPop();
+                    }}
+                    className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer group ${
+                      selectedApp === item.id
+                        ? 'bg-cat-card border-cat-primary/50 shadow-md'
+                        : 'bg-cat-bg/70 border-cat-border/60 hover:border-cat-border'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`w-9 h-9 rounded-xl border flex items-center justify-center text-base shrink-0 bg-gradient-to-tr ${item.color}`}>
+                        {item.icon}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-bold transition-colors truncate ${
+                            selectedApp === item.id ? 'text-cat-primary' : 'text-white group-hover:text-cat-primary'
+                          }`}>
+                            {item.title}
+                          </span>
+                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-white/10 text-gray-300 font-mono shrink-0">
+                            {item.size}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-400 truncate mt-0.5">
+                          {item.desc}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {t.download.step1Desc}
-                    </p>
-                  </div>
-                </div>
 
-                {/* Step 2: Neko Punch */}
-                <div className="relative flex items-start gap-4">
-                  <div className="w-7 h-7 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-xs font-bold text-emerald-400 z-10 shrink-0">
-                    ✓
+                    <a
+                      href={item.href}
+                      download={item.fileName}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        item.id === 'purr' ? sounds.playPurr() : sounds.playSuccess();
+                      }}
+                      title={`${item.fileName} 다운로드`}
+                      className={`p-2 rounded-xl bg-cat-bg border border-cat-border text-gray-300 transition-all shrink-0 ${item.btnColor}`}
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </a>
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-emerald-400">{t.download.step2Title}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono">
-                        {t.download.step2Badge}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {t.download.step2Desc}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Step 3: Bongo Format */}
-                <div className="relative flex items-start gap-4">
-                  <div className="w-7 h-7 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-xs font-bold text-emerald-400 z-10 shrink-0">
-                    ✓
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-emerald-400">{t.download.step3Title}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono">
-                        {t.download.step3Badge}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {t.download.step3Desc}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Step 4: Purr Focus */}
-                <div className="relative flex items-start gap-4">
-                  <div className="w-7 h-7 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-xs font-bold text-emerald-400 z-10 shrink-0">
-                    ✓
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-emerald-400">{t.download.step4Title}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono">
-                        {t.download.step4Badge}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {t.download.step4Desc}
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-cat-border text-center">
+            <div className="mt-6 pt-4 border-t border-cat-border flex items-center justify-between text-xs">
+              <span className="text-[11px] text-gray-500">
+                100% 무설치 포터블 (.exe)
+              </span>
               <a
-                href="https://github.com"
+                href="https://github.com/kbyms104/neko-suite/releases/tag/v1.0.0"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs text-cat-primary hover:underline font-semibold"
