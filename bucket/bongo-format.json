@@ -1,0 +1,25 @@
+{
+  "version": "0.3.0",
+  "description": "Clipboard data formatter (JSON tree/table, SQL, CSV grid, JWT) with Bongo Cat typing animations.",
+  "homepage": "https://kbyms104.github.io/neko-suite/",
+  "license": "MIT",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/kbyms104/neko-suite/releases/download/v1.0.0/Bongo_Format.exe",
+      "hash": "2782b7ebae91d42092ab3effc95e3c4c43350bb57118a8a782238b72f82e8c75",
+      "bin": [
+        [
+          "Bongo_Format.exe",
+          "bongo-format"
+        ]
+      ],
+      "shortcuts": [
+        [
+          "Bongo_Format.exe",
+          "Bongo Format"
+        ]
+      ]
+    }
+  },
+  "checkver": "github"
+}

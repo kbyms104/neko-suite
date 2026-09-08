@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Check, Copy, Shield, ArrowRight, CheckCircle2, Clock, Sparkles } from 'lucide-react';
+import { Download, Check, Copy, Shield, ArrowRight, CheckCircle2, Clock, Sparkles, Terminal } from 'lucide-react';
 import { sounds } from '../sound';
 import { useLanguage } from '../context/LanguageContext';
 import catBoxerImg from '../assets/cat_boxer.png';
@@ -12,12 +12,20 @@ export const DownloadCenter: React.FC = () => {
   const { t, lang } = useLanguage();
   const [selectedApp, setSelectedApp] = useState<DownloadApp>('purr'); // 방금 출시된 4호 앱을 기본 포커스
   const [copiedSha, setCopiedSha] = useState(false);
+  const [copiedWinget, setCopiedWinget] = useState(false);
 
   const shaMap = {
-    purr: 'c9f41e8f12d4b6c884210f9e1e2d3c4b5a6f7e8d9c0b1a2f3e4d5c6b7a8f9e0e4',
-    bongo: 'd8a39e8f12d4b6c884210f9e1e2d3c4b5a6f7e8d9c0b1a2f3e4d5c6b7a8f9e0e3',
-    punch: 'f7c20a9e8b1d4c682410a9e1e2d3c4b5a6f7e8d9c0b1a2f3e4d5c6b7a8f9e0e2',
-    drop: 'a39e8f12d4b6c884210f9e1e2d3c4b5a6f7e8d9c0b1a2f3e4d5c6b7a8f9e0d1',
+    purr: '0c8235fa8f189073ae4212b9f27a295b224abbff1a6c1942f7bc2ef822efcdf1',
+    bongo: '2782b7ebae91d42092ab3effc95e3c4c43350bb57118a8a782238b72f82e8c75',
+    punch: '0cd0011fca14b5c0b104cee1fceb928fd4fd9d86a647f6e886532534516900eb',
+    drop: 'cb8b009f13eea06562adda93d140705cfb3a2bf0766d14e02dd07e3c22eec695',
+  };
+
+  const wingetCmdMap = {
+    purr: 'winget install NekoSuite.PurrFocus',
+    bongo: 'winget install NekoSuite.BongoFormat',
+    punch: 'winget install NekoSuite.NekoPunch',
+    drop: 'winget install NekoSuite.NekoDrop',
   };
 
   const handleCopySha = () => {
@@ -25,6 +33,13 @@ export const DownloadCenter: React.FC = () => {
     setCopiedSha(true);
     sounds.playPop();
     setTimeout(() => setCopiedSha(false), 2000);
+  };
+
+  const handleCopyWinget = () => {
+    navigator.clipboard.writeText(wingetCmdMap[selectedApp]);
+    setCopiedWinget(true);
+    sounds.playPop();
+    setTimeout(() => setCopiedWinget(false), 2000);
   };
 
   return (
@@ -244,6 +259,23 @@ export const DownloadCenter: React.FC = () => {
                   {selectedApp === 'purr' ? '6.0MB' : selectedApp === 'bongo' ? '8.5MB' : selectedApp === 'punch' ? '7.4MB' : '34MB'}
                 </span>
               </a>
+
+              {/* WinGet Command Quick Box */}
+              <div className="p-2.5 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0 font-mono text-xs">
+                  <Terminal className="w-3.5 h-3.5 text-cat-primary shrink-0" />
+                  <span className="text-gray-500 select-none">$</span>
+                  <span className="text-gray-300 truncate select-all">{wingetCmdMap[selectedApp]}</span>
+                </div>
+                <button
+                  onClick={handleCopyWinget}
+                  className="px-2 py-0.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-[11px] font-semibold text-white flex items-center gap-1 transition-all shrink-0"
+                  title="WinGet 설치 명령어 복사"
+                >
+                  {copiedWinget ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedWinget ? '복사됨' : 'WinGet 복사'}</span>
+                </button>
+              </div>
 
               <div className="flex items-center justify-between text-[11px] text-gray-500 pt-1">
                 <span className="flex items-center gap-1">

@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "description": "One-click port conflict detector & zombie process killer with cat boxing animations.",
+  "homepage": "https://kbyms104.github.io/neko-suite/",
+  "license": "MIT",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/kbyms104/neko-suite/releases/download/v1.0.0/Neko_Punch.exe",
+      "hash": "0cd0011fca14b5c0b104cee1fceb928fd4fd9d86a647f6e886532534516900eb",
+      "bin": [
+        [
+          "Neko_Punch.exe",
+          "neko-punch"
+        ]
+      ],
+      "shortcuts": [
+        [
+          "Neko_Punch.exe",
+          "Neko Punch"
+        ]
+      ]
+    }
+  },
+  "checkver": "github"
+}

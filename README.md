@@ -58,15 +58,59 @@ npm run dev:web              # 쇼케이스 웹 (http://localhost:5174)
 
 ---
 
-## 📦 배포 및 실행 (Release & Distribution)
+## 📦 배포 및 설치 (Release & Distribution)
 
-### 🌟 1. 무설치 단일 포터블 실행 (가장 추천!)
-- 설치 과정이나 추가 부속 파일(DLL, 웹 폴더 등)이 **일절 필요 없는 단 1개의 독립 `.exe` 파일**입니다.
+### 🌟 1. Windows 공식 패키지 관리자 (WinGet) 설치
+Windows 10 / 11의 터미널(PowerShell 또는 CMD)에서 한 줄 명령어로 즉시 설치할 수 있습니다:
+
+```powershell
+# 1호 Neko Drop 설치
+winget install NekoSuite.NekoDrop
+
+# 2호 Neko Punch 설치
+winget install NekoSuite.NekoPunch
+
+# 3호 Bongo Format 설치
+winget install NekoSuite.BongoFormat
+
+# 4호 Purr Focus 설치
+winget install NekoSuite.PurrFocus
+```
+
+> **WinGet 공식 커뮤니티 저장소(`microsoft/winget-pkgs`) PR 현황**:
+> - 🐾 [Purr Focus PR #431215](https://github.com/microsoft/winget-pkgs/pull/431215)
+> - 🐟 [Neko Drop PR #431216](https://github.com/microsoft/winget-pkgs/pull/431216)
+> - 🥊 [Neko Punch PR #431217](https://github.com/microsoft/winget-pkgs/pull/431217)
+> - 🐱 [Bongo Format PR #431218](https://github.com/microsoft/winget-pkgs/pull/431218)
+>
+> *(로컬 매니페스트로 지금 즉시 설치하려면: `winget install -m winget-pkgs/manifests/n/NekoSuite/<App>/<Version>`)*
+
+---
+
+### 🍦 2. Scoop 패키지 관리자 설치
+Scoop을 사용하는 개발자라면 저장소 버킷을 추가하여 즉시 설치할 수 있습니다:
+
+```powershell
+# Neko Suite 버킷 추가
+scoop bucket add neko https://github.com/kbyms104/neko-suite
+
+# 원하는 도구 설치
+scoop install purr-focus
+scoop install bongo-format
+scoop install neko-punch
+scoop install neko-drop
+```
+
+---
+
+### 🚀 3. 무설치 단일 포터블 실행 (.exe 직접 다운로드)
+- 설치 과정이나 추가 부속 파일(DLL, 런타임 등)이 **일절 필요 없는 단 1개의 독립 `.exe` 파일**입니다.
 - 바탕화면, 다운로드 폴더, USB 등 어디서나 더블 클릭하여 바로 실행할 수 있습니다.
-- **1호 앱**: [`portable/Neko Drop.exe`](file:///c:/Users/yun/Desktop/project/desktop_app/portable/Neko%20Drop.exe) (~34 MB)
-- **2호 앱**: [`portable/Neko Punch.exe`](file:///c:/Users/yun/Desktop/project/desktop_app/portable/Neko%20Punch.exe) (~7.4 MB)
-- **3호 앱**: [`portable/Bongo Format.exe`](file:///c:/Users/yun/Desktop/project/desktop_app/portable/Bongo%20Format.exe) (~8.5 MB)
-- **4호 앱**: [`portable/Purr Focus.exe`](file:///c:/Users/yun/Desktop/project/desktop_app/portable/Purr%20Focus.exe) (~4.5 MB)
+- **공식 릴리즈 배포 페이지**: 👉 **[GitHub Releases (v1.0.0)](https://github.com/kbyms104/neko-suite/releases/tag/v1.0.0)**
+- **1호 앱**: [`portable/Neko Drop.exe`](file:///c:/Users/yun/Desktop/project/desktop_app/portable/Neko%20Drop.exe) (~34.1 MB)
+- **2호 앱**: [`portable/Neko Punch.exe`](file:///c:/Users/yun/Desktop/project/desktop_app/portable/Neko%20Punch.exe) (~7.1 MB)
+- **3호 앱**: [`portable/Bongo Format.exe`](file:///c:/Users/yun/Desktop/project/desktop_app/portable/Bongo%20Format.exe) (~4.4 MB)
+- **4호 앱**: [`portable/Purr Focus.exe`](file:///c:/Users/yun/Desktop/project/desktop_app/portable/Purr%20Focus.exe) (~6.0 MB)
 
 ### 2. 로컬 빌드 스크립트 (원클릭 빌드)
 - **1호 Neko Drop 빌드**:

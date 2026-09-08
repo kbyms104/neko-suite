@@ -1,0 +1,25 @@
+{
+  "version": "0.1.0",
+  "description": "Ultra-fast tabular data file converter powered by Rust Polars (CSV, Parquet, JSON, XLSX).",
+  "homepage": "https://kbyms104.github.io/neko-suite/",
+  "license": "MIT",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/kbyms104/neko-suite/releases/download/v1.0.0/Neko_Drop.exe",
+      "hash": "cb8b009f13eea06562adda93d140705cfb3a2bf0766d14e02dd07e3c22eec695",
+      "bin": [
+        [
+          "Neko_Drop.exe",
+          "neko-drop"
+        ]
+      ],
+      "shortcuts": [
+        [
+          "Neko_Drop.exe",
+          "Neko Drop"
+        ]
+      ]
+    }
+  },
+  "checkver": "github"
+}
