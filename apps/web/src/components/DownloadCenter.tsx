@@ -241,7 +241,7 @@ export const DownloadCenter: React.FC = () => {
                     : t.download.downloadBtn}
                 </span>
                 <span className="text-xs bg-black/20 px-2 py-0.5 rounded-md font-mono">
-                  {selectedApp === 'purr' ? '4.5MB' : selectedApp === 'bongo' ? '8.5MB' : selectedApp === 'punch' ? '7.4MB' : '34MB'}
+                  {selectedApp === 'purr' ? '6.0MB' : selectedApp === 'bongo' ? '8.5MB' : selectedApp === 'punch' ? '7.4MB' : '34MB'}
                 </span>
               </a>
 
