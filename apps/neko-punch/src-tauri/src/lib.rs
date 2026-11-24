@@ -1,9 +1,11 @@
 pub mod commands;
 
 use commands::{
-    close_window, exit_app, minimize_window, punch_process, scan_listening_ports,
-    start_drag_window,
+    close_window, exit_app, hide_window, minimize_window, punch_process, punch_processes,
+    scan_listening_ports, start_drag_window, SystemState,
 };
+use std::sync::Mutex;
+use sysinfo::System;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -14,6 +16,7 @@ use tauri::{
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .manage(SystemState(Mutex::new(System::new())))
         .setup(|app| {
             // 시스템 트레이 메뉴 생성
             let show_i = MenuItem::with_id(app, "show", "열기 (Show)", true, None::<&str>)?;
@@ -68,6 +71,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             scan_listening_ports,
             punch_process,
+            punch_processes,
+            hide_window,
             exit_app,
             close_window,
             minimize_window,

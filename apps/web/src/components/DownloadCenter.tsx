@@ -15,10 +15,10 @@ export const DownloadCenter: React.FC = () => {
   const [copiedWinget, setCopiedWinget] = useState(false);
 
   const shaMap = {
-    purr: '0c8235fa8f189073ae4212b9f27a295b224abbff1a6c1942f7bc2ef822efcdf1',
-    bongo: '2782b7ebae91d42092ab3effc95e3c4c43350bb57118a8a782238b72f82e8c75',
-    punch: '0cd0011fca14b5c0b104cee1fceb928fd4fd9d86a647f6e886532534516900eb',
-    drop: 'cb8b009f13eea06562adda93d140705cfb3a2bf0766d14e02dd07e3c22eec695',
+    purr: '806fb1796053e6e878e37cbcb71b60cf1dd151e49c383a18366e082539bc27cd',
+    bongo: '1ab8d57f91cb3491189a4f0eb8174fd1fa1e27aebe41b0e2801435403ce8969f',
+    punch: 'df222b79e0c96fd681f1821bef8d88bcaa9e17467f1e7f27486369f69bbf2f65',
+    drop: '303de1d55cb990b875acfa235a8379ca40f6de5c024a66adf08c6b8a62ea5d97',
   };
 
   const wingetCmdMap = {
@@ -159,11 +159,11 @@ export const DownloadCenter: React.FC = () => {
                   <div>
                     <h3 className="text-xl font-bold text-white font-brand">
                       {selectedApp === 'purr'
-                        ? 'Purr Focus v0.4.0'
+                        ? 'Purr Focus v1.1.0'
                         : selectedApp === 'bongo'
-                        ? 'Bongo Format v0.3.0'
+                        ? 'Bongo Format v1.1.0'
                         : selectedApp === 'punch'
-                        ? 'Neko Punch v0.2.0'
+                        ? 'Neko Punch v1.1.0'
                         : t.download.cardTitle}
                     </h3>
                     <p className="text-xs text-pink-300 font-semibold">
@@ -201,7 +201,7 @@ export const DownloadCenter: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span>{t.download.specSize}</span>
-                  <span className="text-gray-200">{selectedApp === 'purr' ? '~4.5 MB' : selectedApp === 'bongo' ? '~8.5 MB' : selectedApp === 'punch' ? '~7.4 MB' : '~34 MB'}</span>
+                  <span className="text-gray-200">{selectedApp === 'purr' ? '5.8 MB' : selectedApp === 'bongo' ? '4.4 MB' : selectedApp === 'punch' ? '7.1 MB' : '34.2 MB'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>{t.download.specOs}</span>
@@ -256,7 +256,7 @@ export const DownloadCenter: React.FC = () => {
                     : t.download.downloadBtn}
                 </span>
                 <span className="text-xs bg-black/20 px-2 py-0.5 rounded-md font-mono">
-                  {selectedApp === 'purr' ? '6.0MB' : selectedApp === 'bongo' ? '8.5MB' : selectedApp === 'punch' ? '7.4MB' : '34MB'}
+                  {selectedApp === 'purr' ? '5.8MB' : selectedApp === 'bongo' ? '4.4MB' : selectedApp === 'punch' ? '7.1MB' : '34.2MB'}
                 </span>
               </a>
 
@@ -406,7 +406,7 @@ export const DownloadCenter: React.FC = () => {
                 100% 무설치 포터블 (.exe)
               </span>
               <a
-                href="https://github.com/kbyms104/neko-suite/releases/tag/v1.0.0"
+                href="https://github.com/kbyms104/neko-suite/releases/tag/v1.1.0"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs text-cat-primary hover:underline font-semibold"

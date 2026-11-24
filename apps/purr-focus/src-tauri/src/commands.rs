@@ -1,15 +1,26 @@
 use std::sync::atomic::{AtomicBool, Ordering};
+use tauri::Emitter;
 
 static ALWAYS_ON_TOP: AtomicBool = AtomicBool::new(true);
-static CLICK_THROUGH: AtomicBool = AtomicBool::new(false);
+pub static CLICK_THROUGH: AtomicBool = AtomicBool::new(false);
 
 #[tauri::command]
-pub fn set_click_through(window: tauri::Window, enable: bool) -> Result<bool, String> {
+pub fn set_click_through(
+    app: tauri::AppHandle,
+    window: tauri::Window,
+    enable: bool,
+) -> Result<bool, String> {
     window
         .set_ignore_cursor_events(enable)
         .map_err(|e| format!("클릭 투과 설정 실패: {}", e))?;
     CLICK_THROUGH.store(enable, Ordering::SeqCst);
+    let _ = app.emit("click-through-changed", enable);
     Ok(enable)
+}
+
+#[tauri::command]
+pub fn hide_window(window: tauri::Window) {
+    let _ = window.hide();
 }
 
 #[tauri::command]

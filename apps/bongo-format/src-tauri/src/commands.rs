@@ -1,6 +1,8 @@
 use arboard::Clipboard;
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
+use tauri::Manager;
 
 static ALWAYS_ON_TOP: AtomicBool = AtomicBool::new(false);
 
@@ -198,6 +200,58 @@ pub fn toggle_always_on_top(window: tauri::Window) -> Result<bool, String> {
         .map_err(|e| format!("항상 위 설정 실패: {}", e))?;
     ALWAYS_ON_TOP.store(next, Ordering::SeqCst);
     Ok(next)
+}
+
+#[tauri::command]
+pub fn save_formatted_file(
+    app: tauri::AppHandle,
+    content: String,
+    extension: String,
+) -> Result<String, String> {
+    let clean_ext: String = extension
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .take(10)
+        .collect::<String>()
+        .to_lowercase();
+    let ext = if clean_ext.is_empty() {
+        "txt".to_string()
+    } else {
+        clean_ext
+    };
+
+    let base_dir = app
+        .path()
+        .download_dir()
+        .or_else(|_| app.path().desktop_dir())
+        .unwrap_or_else(|_| std::env::temp_dir());
+
+    if !base_dir.exists() {
+        std::fs::create_dir_all(&base_dir)
+            .map_err(|e| format!("저장 폴더 생성 실패: {}", e))?;
+    }
+
+    let ts = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+
+    let mut target_path = base_dir.join(format!("bongo_export_{}.{}", ts, ext));
+    let mut suffix = 1u32;
+    while target_path.exists() {
+        target_path = base_dir.join(format!("bongo_export_{}_{}.{}", ts, suffix, ext));
+        suffix += 1;
+    }
+
+    std::fs::write(&target_path, content.as_bytes())
+        .map_err(|e| format!("파일 저장 실패: {}", e))?;
+
+    Ok(target_path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub fn hide_window(window: tauri::Window) {
+    let _ = window.hide();
 }
 
 #[tauri::command]

@@ -1,8 +1,9 @@
 pub mod commands;
 
 use commands::{
-    close_window, exit_app, format_json_cmd, format_sql_cmd, minimize_window, parse_csv_cmd,
-    read_clipboard, start_drag_window, toggle_always_on_top, write_clipboard,
+    close_window, exit_app, format_json_cmd, format_sql_cmd, hide_window, minimize_window,
+    parse_csv_cmd, read_clipboard, save_formatted_file, start_drag_window, toggle_always_on_top,
+    write_clipboard,
 };
 use tauri::{
     menu::{Menu, MenuItem},
@@ -68,10 +69,12 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             read_clipboard,
             write_clipboard,
+            save_formatted_file,
             format_sql_cmd,
             format_json_cmd,
             parse_csv_cmd,
             toggle_always_on_top,
+            hide_window,
             exit_app,
             close_window,
             minimize_window,

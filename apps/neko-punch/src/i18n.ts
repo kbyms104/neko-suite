@@ -23,6 +23,10 @@ export const translations = {
       addBtn: '추가',
       noCustomPorts: '등록된 내 포트가 없습니다. 위 입력창이나 포트 옆의 ⭐를 눌러 추가해 보세요!',
       customHint: '등록한 포트 목록은 자동으로 안전하게 저장됩니다.',
+      batchPunchBtn: (count: number) => `필터된 ${count}개 일괄 냥펀치!`,
+      batchKilledSuccess: (count: number) => `${count}개 프로세스를 한방에 퇴치했다냥! 💥`,
+      copyPid: 'PID 복사',
+      copiedPid: '복사됨!',
     },
     table: {
       port: '포트',
@@ -68,6 +72,10 @@ export const translations = {
       addBtn: 'Add',
       noCustomPorts: 'No custom ports added yet. Add one above or click ⭐ on any port below!',
       customHint: 'Your customized ports are saved automatically.',
+      batchPunchBtn: (count: number) => `Batch Punch ${count}`,
+      batchKilledSuccess: (count: number) => `Terminated ${count} process(es)! 💥`,
+      copyPid: 'Copy PID',
+      copiedPid: 'Copied!',
     },
     table: {
       port: 'Port',

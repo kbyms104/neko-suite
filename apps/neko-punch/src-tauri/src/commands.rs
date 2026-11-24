@@ -1,13 +1,18 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::path::Path;
 use std::process::Command;
-use sysinfo::{Pid, System};
+use std::sync::Mutex;
+use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
+
+pub struct SystemState(pub Mutex<System>);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PortProcessInfo {
     pub port: u16,
     pub pid: u32,
     pub name: String,
+    pub cmd_hint: String,
     pub memory_mb: f64,
     pub protocol: String,
     pub local_addr: String,
@@ -20,8 +25,70 @@ pub struct PunchResult {
     pub pid: u32,
 }
 
+fn extract_cmd_hint(proc: &sysinfo::Process) -> String {
+    let cwd_name = proc
+        .cwd()
+        .and_then(|p| p.file_name())
+        .map(|s| s.to_string_lossy().to_string())
+        .unwrap_or_default();
+
+    let args: Vec<String> = proc
+        .cmd()
+        .iter()
+        .skip(1)
+        .map(|s| s.to_string_lossy().to_string())
+        .collect();
+
+    let keywords = [
+        "vite", "next", "nuxt", "remix", "astro", "webpack", "rollup", "esbuild", "tsx",
+        "ts-node", "nodemon", "uvicorn", "gunicorn", "fastapi", "flask", "django", "celery",
+        "tauri", "cargo", "spring", "docker", "jupyter", "streamlit", "gradio",
+    ];
+
+    let mut script_or_tool = String::new();
+    for arg in &args {
+        let lower = arg.to_lowercase();
+        if let Some(kw) = keywords.iter().find(|&&k| lower.contains(k)) {
+            script_or_tool = (*kw).to_string();
+            break;
+        }
+        if !arg.starts_with('-')
+            && (lower.ends_with(".js")
+                || lower.ends_with(".mjs")
+                || lower.ends_with(".cjs")
+                || lower.ends_with(".ts")
+                || lower.ends_with(".py")
+                || lower.ends_with(".jar"))
+        {
+            if let Some(fname) = Path::new(arg).file_name() {
+                script_or_tool = fname.to_string_lossy().to_string();
+                break;
+            }
+        }
+    }
+
+    if script_or_tool.is_empty() {
+        if let Some(first_non_flag) = args.iter().find(|a| !a.starts_with('-') && !a.is_empty()) {
+            let clean = Path::new(first_non_flag)
+                .file_name()
+                .map(|s| s.to_string_lossy().to_string())
+                .unwrap_or_else(|| first_non_flag.clone());
+            if !clean.is_empty() && clean.len() <= 24 {
+                script_or_tool = clean;
+            }
+        }
+    }
+
+    match (script_or_tool.is_empty(), cwd_name.is_empty()) {
+        (false, false) if script_or_tool != cwd_name => format!("{} · {}", script_or_tool, cwd_name),
+        (false, _) => script_or_tool,
+        (true, false) => cwd_name,
+        (true, true) => String::new(),
+    }
+}
+
 #[tauri::command]
-pub fn scan_listening_ports() -> Result<Vec<PortProcessInfo>, String> {
+pub fn scan_listening_ports(state: tauri::State<'_, SystemState>) -> Result<Vec<PortProcessInfo>, String> {
     // Windows netstat -ano -p tcp 실행하여 LISTEN 중인 포트와 PID 획득
     #[cfg(target_os = "windows")]
     let output = {
@@ -43,12 +110,9 @@ pub fn scan_listening_ports() -> Result<Vec<PortProcessInfo>, String> {
 
     let stdout = String::from_utf8_lossy(&output.stdout);
 
-    // 프로세스 메모리 및 이름 조회를 위해 sysinfo 초기화
-    let mut sys = System::new_all();
-    sys.refresh_all();
-
-    let mut list = Vec::new();
+    let mut raw_entries: Vec<(u16, u32, String, String)> = Vec::new();
     let mut seen = HashSet::new();
+    let mut target_pids: HashSet<Pid> = HashSet::new();
 
     for line in stdout.lines() {
         let trimmed = line.trim();
@@ -56,8 +120,6 @@ pub fn scan_listening_ports() -> Result<Vec<PortProcessInfo>, String> {
             continue;
         }
 
-        // 공백으로 토큰 분리
-        // 예: ["TCP", "0.0.0.0:8080", "0.0.0.0:0", "LISTENING", "14208"]
         let parts: Vec<&str> = trimmed.split_whitespace().collect();
         if parts.len() < 5 {
             continue;
@@ -65,10 +127,10 @@ pub fn scan_listening_ports() -> Result<Vec<PortProcessInfo>, String> {
 
         let protocol = parts[0];
         let local_addr = parts[1];
-        let state = parts[3];
+        let state_str = parts[3];
         let pid_str = parts[4];
 
-        if state.to_uppercase() != "LISTENING" {
+        if state_str.to_uppercase() != "LISTENING" {
             continue;
         }
 
@@ -77,7 +139,6 @@ pub fn scan_listening_ports() -> Result<Vec<PortProcessInfo>, String> {
             Err(_) => continue,
         };
 
-        // 포트 번호 파싱 (예: "0.0.0.0:8080" 또는 "[::]:3000")
         let port = match local_addr.rfind(':') {
             Some(idx) => match local_addr[idx + 1..].parse::<u16>() {
                 Ok(p) => p,
@@ -86,33 +147,54 @@ pub fn scan_listening_ports() -> Result<Vec<PortProcessInfo>, String> {
             None => continue,
         };
 
-        // 중복 포트 & PID 쌍 필터링
         let key = (port, pid);
         if seen.contains(&key) {
             continue;
         }
         seen.insert(key);
 
-        // sysinfo를 통해 프로세스 이름 및 메모리 추출
-        let (name, memory_mb) = if let Some(proc) = sys.process(Pid::from(pid as usize)) {
+        if pid > 4 {
+            target_pids.insert(Pid::from_u32(pid));
+        }
+        raw_entries.push((port, pid, protocol.to_string(), local_addr.to_string()));
+    }
+
+    // 공유 System 인스턴스로 LISTEN 중인 PID만 최소 리프레시하여 CPU/메모리 오버헤드 최소화
+    let pid_vec: Vec<Pid> = target_pids.into_iter().collect();
+    let mut sys = state.0.lock().map_err(|e| format!("System lock error: {}", e))?;
+    if !pid_vec.is_empty() {
+        sys.refresh_processes_specifics(
+            ProcessesToUpdate::Some(&pid_vec),
+            ProcessRefreshKind::new()
+                .with_memory()
+                .with_cmd(UpdateKind::OnlyIfNotSet)
+                .with_cwd(UpdateKind::OnlyIfNotSet),
+        );
+    }
+
+    let mut list = Vec::with_capacity(raw_entries.len());
+    for (port, pid, protocol, local_addr) in raw_entries {
+        let (name, cmd_hint, memory_mb) = if let Some(proc) = sys.process(Pid::from_u32(pid)) {
             let proc_name = proc.name().to_string_lossy().to_string();
+            let hint = extract_cmd_hint(proc);
             let mem_mb = proc.memory() as f64 / (1024.0 * 1024.0);
-            (proc_name, (mem_mb * 10.0).round() / 10.0)
+            (proc_name, hint, (mem_mb * 10.0).round() / 10.0)
         } else if pid == 0 {
-            ("System Idle".to_string(), 0.0)
+            ("System Idle".to_string(), String::new(), 0.0)
         } else if pid == 4 {
-            ("System Kernel".to_string(), 0.0)
+            ("System Kernel".to_string(), String::new(), 0.0)
         } else {
-            ("Unknown Process".to_string(), 0.0)
+            ("Unknown Process".to_string(), String::new(), 0.0)
         };
 
         list.push(PortProcessInfo {
             port,
             pid,
             name,
+            cmd_hint,
             memory_mb,
-            protocol: protocol.to_string(),
-            local_addr: local_addr.to_string(),
+            protocol,
+            local_addr,
         });
     }
 
@@ -169,6 +251,23 @@ pub fn punch_process(pid: u32) -> Result<PunchResult, String> {
             Err("Failed to terminate process".to_string())
         }
     }
+}
+
+#[tauri::command]
+pub fn punch_processes(pids: Vec<u32>) -> Result<Vec<u32>, String> {
+    let mut killed = Vec::new();
+    let unique_pids: HashSet<u32> = pids.into_iter().filter(|&p| p > 4).collect();
+    for pid in unique_pids {
+        if punch_process(pid).is_ok() {
+            killed.push(pid);
+        }
+    }
+    Ok(killed)
+}
+
+#[tauri::command]
+pub fn hide_window(window: tauri::Window) {
+    let _ = window.hide();
 }
 
 #[tauri::command]

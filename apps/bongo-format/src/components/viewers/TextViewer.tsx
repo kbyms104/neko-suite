@@ -1,5 +1,5 @@
-import React from 'react';
-import { FileText, Sparkles, Wand2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { FileText, Wand2 } from 'lucide-react';
 import { Language, translations } from '../../i18n';
 import { sounds } from '../../sound';
 
@@ -15,12 +15,18 @@ export const TextViewer: React.FC<TextViewerProps> = ({
   onTextChange,
 }) => {
   const t = translations[lang];
+  const [codecError, setCodecError] = useState<string | null>(null);
 
   // Text statistics
   const charCount = text.length;
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
   const lineCount = text ? text.split('\n').length : 0;
   const byteCount = new TextEncoder().encode(text).length;
+
+  const showError = (msg: string) => {
+    setCodecError(msg);
+    setTimeout(() => setCodecError(null), 2000);
+  };
 
   const handleToUpper = () => {
     sounds.playPop();
@@ -62,6 +68,43 @@ export const TextViewer: React.FC<TextViewerProps> = ({
     onTextChange(cleaned);
   };
 
+  const handleBase64Encode = () => {
+    sounds.playPop();
+    const bytes = new TextEncoder().encode(text);
+    let binary = '';
+    bytes.forEach((b) => {
+      binary += String.fromCharCode(b);
+    });
+    onTextChange(btoa(binary));
+  };
+
+  const handleBase64Decode = () => {
+    try {
+      const binary = atob(text.trim());
+      const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+      const decoded = new TextDecoder().decode(bytes);
+      sounds.playSuccess();
+      onTextChange(decoded);
+    } catch {
+      showError(lang === 'ko' ? '유효한 Base64가 아닙니다' : 'Invalid Base64');
+    }
+  };
+
+  const handleUrlEncode = () => {
+    sounds.playPop();
+    onTextChange(encodeURIComponent(text));
+  };
+
+  const handleUrlDecode = () => {
+    try {
+      const decoded = decodeURIComponent(text);
+      sounds.playSuccess();
+      onTextChange(decoded);
+    } catch {
+      showError(lang === 'ko' ? '유효한 URL 인코딩이 아닙니다' : 'Invalid URL encoding');
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#12131a]">
       {/* Sub-toolbar: Stats and Helpers */}
@@ -76,10 +119,13 @@ export const TextViewer: React.FC<TextViewerProps> = ({
           <span>{t.text.lines} <strong className="text-white">{lineCount}</strong></span>
           <span>•</span>
           <span>{t.text.bytes} <strong className="text-white">{byteCount}</strong></span>
+          {codecError && (
+            <span className="ml-2 text-[11px] font-bold text-rose-400">{codecError}</span>
+          )}
         </div>
 
-        {/* Transforms */}
-        <div className="flex items-center gap-1">
+        {/* Transforms & Codecs */}
+        <div className="flex items-center flex-wrap gap-1">
           <button
             onClick={handleToUpper}
             className="px-2 py-1 rounded bg-cat-card hover:bg-cat-cardHover border border-cat-border text-[11px] text-gray-300"
@@ -103,6 +149,30 @@ export const TextViewer: React.FC<TextViewerProps> = ({
             className="px-2 py-1 rounded bg-cat-card hover:bg-cat-cardHover border border-cat-border text-[11px] text-gray-300"
           >
             {t.text.toSnake}
+          </button>
+          <button
+            onClick={handleBase64Encode}
+            className="px-2 py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-[11px] text-amber-300"
+          >
+            {t.text.b64Encode}
+          </button>
+          <button
+            onClick={handleBase64Decode}
+            className="px-2 py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-[11px] text-amber-300"
+          >
+            {t.text.b64Decode}
+          </button>
+          <button
+            onClick={handleUrlEncode}
+            className="px-2 py-1 rounded bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-[11px] text-sky-300"
+          >
+            {t.text.urlEncode}
+          </button>
+          <button
+            onClick={handleUrlDecode}
+            className="px-2 py-1 rounded bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-[11px] text-sky-300"
+          >
+            {t.text.urlDecode}
           </button>
           <button
             onClick={handleTrimClean}

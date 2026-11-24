@@ -1,5 +1,5 @@
 import React from 'react';
-import { Volume2, VolumeX, Pin, Minus, X, Sparkles } from 'lucide-react';
+import { Volume2, VolumeX, Pin, Minus, X, EyeOff } from 'lucide-react';
 import { Language, translations } from '../i18n';
 import { sounds } from '../sound';
 
@@ -42,6 +42,16 @@ export const TitleBar: React.FC<TitleBarProps> = ({
     try {
       const { invoke } = await import('@tauri-apps/api/core');
       await invoke('minimize_window');
+    } catch (e) {
+      // browser fallback
+    }
+  };
+
+  const handleHide = async () => {
+    sounds.playPop();
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('hide_window');
     } catch (e) {
       // browser fallback
     }
@@ -122,6 +132,15 @@ export const TitleBar: React.FC<TitleBarProps> = ({
         </button>
 
         <div className="w-[1px] h-3 bg-cat-border/80 mx-1" />
+
+        {/* Hide to Tray Button */}
+        <button
+          onClick={handleHide}
+          title={t.app.hideToTray}
+          className="p-1.5 rounded-lg hover:bg-cat-card text-gray-400 hover:text-white transition-all"
+        >
+          <EyeOff className="w-3.5 h-3.5" />
+        </button>
 
         {/* Minimize Button */}
         <button

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, X, Plus, Minus, Check, Clock, Coffee, Target, Volume2, Bell } from 'lucide-react';
 import { TimerSettings } from '../types';
 import { Language, translations } from '../i18n';
@@ -25,6 +25,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [breakMin, setBreakMin] = useState<number>(settings.breakMinutes);
   const [purrEnabled, setPurrEnabled] = useState<boolean>(settings.enablePurr);
   const [chimeEnabled, setChimeEnabled] = useState<boolean>(settings.enableChime);
+
+  useEffect(() => {
+    if (isOpen) {
+      setFocusMin(settings.focusMinutes);
+      setBreakMin(settings.breakMinutes);
+      setPurrEnabled(settings.enablePurr);
+      setChimeEnabled(settings.enableChime);
+    }
+  }, [isOpen, settings]);
 
   if (!isOpen) return null;
 

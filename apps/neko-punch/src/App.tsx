@@ -6,16 +6,30 @@ import { Language, translations } from './i18n';
 import { sounds } from './sound';
 
 const MOCK_PORTS: PortProcess[] = [
-  { port: 8080, pid: 14208, name: 'node.exe (Next.js Dev Server)', memory_mb: 142.5, protocol: 'TCP', local_addr: '0.0.0.0:8080' },
-  { port: 3000, pid: 8294, name: 'python.exe (FastAPI Backend)', memory_mb: 68.2, protocol: 'TCP', local_addr: '0.0.0.0:3000' },
-  { port: 5173, pid: 21904, name: 'vite.exe (React Frontend)', memory_mb: 85.0, protocol: 'TCP', local_addr: '0.0.0.0:5173' },
-  { port: 5432, pid: 3102, name: 'postgres.exe (Database Zombie)', memory_mb: 54.1, protocol: 'TCP', local_addr: '0.0.0.0:5432' },
-  { port: 6379, pid: 5120, name: 'redis-server.exe', memory_mb: 32.4, protocol: 'TCP', local_addr: '0.0.0.0:6379' },
+  { port: 8080, pid: 14208, name: 'node.exe', cmd_hint: 'next · my-web', memory_mb: 142.5, protocol: 'TCP', local_addr: '0.0.0.0:8080' },
+  { port: 3000, pid: 8294, name: 'python.exe', cmd_hint: 'uvicorn · api', memory_mb: 68.2, protocol: 'TCP', local_addr: '0.0.0.0:3000' },
+  { port: 5173, pid: 21904, name: 'vite.exe', cmd_hint: 'vite · frontend', memory_mb: 85.0, protocol: 'TCP', local_addr: '0.0.0.0:5173' },
+  { port: 5432, pid: 3102, name: 'postgres.exe', cmd_hint: 'pgdata', memory_mb: 54.1, protocol: 'TCP', local_addr: '0.0.0.0:5432' },
+  { port: 6379, pid: 5120, name: 'redis-server.exe', cmd_hint: '', memory_mb: 32.4, protocol: 'TCP', local_addr: '0.0.0.0:6379' },
 ];
 
 export default function App() {
-  const [lang, setLang] = useState<Language>('ko');
-  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [lang, setLang] = useState<Language>(() => {
+    try {
+      const saved = localStorage.getItem('neko_punch_lang');
+      if (saved === 'en' || saved === 'ko') return saved;
+    } catch {}
+    return 'ko';
+  });
+  const [isMuted, setIsMuted] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('neko_punch_muted') === 'true';
+      sounds.setMuted(saved);
+      return saved;
+    } catch {
+      return false;
+    }
+  });
   const [ports, setPorts] = useState<PortProcess[]>([]);
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [lastMessage, setLastMessage] = useState<string | null>(null);
@@ -25,13 +39,22 @@ export default function App() {
 
   const toggleLang = () => {
     sounds.playPop();
-    setLang((prev) => (prev === 'ko' ? 'en' : 'ko'));
+    setLang((prev) => {
+      const next = prev === 'ko' ? 'en' : 'ko';
+      try {
+        localStorage.setItem('neko_punch_lang', next);
+      } catch {}
+      return next;
+    });
   };
 
   const toggleSound = () => {
     const nextState = !isMuted;
     setIsMuted(nextState);
     sounds.setMuted(nextState);
+    try {
+      localStorage.setItem('neko_punch_muted', String(nextState));
+    } catch {}
     if (!nextState) {
       sounds.playPop();
     }
@@ -98,6 +121,30 @@ export default function App() {
     }
   };
 
+  // 일괄 냥펀치 프로세스 종료
+  const handleBatchPunch = async (procs: PortProcess[]): Promise<number[]> => {
+    const killablePids = Array.from(new Set(procs.filter((p) => p.pid > 4).map((p) => p.pid)));
+    if (killablePids.length === 0) return [];
+    setIsPunching(true);
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const killed = await invoke<number[]>('punch_processes', { pids: killablePids });
+      sounds.playSuccess();
+      setLastMessage(t.filters.batchKilledSuccess(killed.length));
+      const killedSet = new Set(killed);
+      setPorts((prev) => prev.filter((p) => !killedSet.has(p.pid)));
+      setIsPunching(false);
+      return killed;
+    } catch {
+      sounds.playSuccess();
+      setLastMessage(t.filters.batchKilledSuccess(killablePids.length));
+      const killedSet = new Set(killablePids);
+      setPorts((prev) => prev.filter((p) => !killedSet.has(p.pid)));
+      setIsPunching(false);
+      return killablePids;
+    }
+  };
+
   return (
     <div className="w-full h-full p-1 bg-transparent select-none antialiased">
       <div className="w-full h-full bg-[#14151e] text-gray-100 flex flex-col overflow-hidden rounded-3xl border-2 border-[#2b2d3b] shadow-2xl">
@@ -123,6 +170,7 @@ export default function App() {
           ports={ports}
           lang={lang}
           onPunch={handlePunch}
+          onBatchPunch={handleBatchPunch}
           isScanning={isScanning}
         />
       </div>

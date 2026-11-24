@@ -1,7 +1,7 @@
 {
   "name": "purr-focus",
   "private": true,
-  "version": "0.4.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

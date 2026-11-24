@@ -314,7 +314,7 @@ dependencies = [
 
 [[package]]
 name = "bongo-format"
-version = "0.3.0"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "arboard",

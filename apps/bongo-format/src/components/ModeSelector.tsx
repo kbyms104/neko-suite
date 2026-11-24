@@ -1,5 +1,5 @@
 import React from 'react';
-import { ClipboardPaste, Copy, Check, FileText, Trash2, Database, Table, KeyRound, Sparkles } from 'lucide-react';
+import { ClipboardPaste, Copy, Check, FileText, Trash2, Database, Table, KeyRound, Sparkles, Download, History, Zap } from 'lucide-react';
 import { FormatType, DetectedFormat } from '../types';
 import { Language, translations } from '../i18n';
 import { sounds } from '../sound';
@@ -11,9 +11,16 @@ interface ModeSelectorProps {
   detected: DetectedFormat;
   onPasteClipboard: () => void;
   onCopyResult: () => void;
+  onSaveFile: () => void;
   onLoadSample: () => void;
   onClear: () => void;
   copied: boolean;
+  saved: boolean;
+  autoClip: boolean;
+  onToggleAutoClip: () => void;
+  historyCount: number;
+  historyOpen: boolean;
+  onToggleHistory: () => void;
   rawLength: number;
 }
 
@@ -24,9 +31,16 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
   detected,
   onPasteClipboard,
   onCopyResult,
+  onSaveFile,
   onLoadSample,
   onClear,
   copied,
+  saved,
+  autoClip,
+  onToggleAutoClip,
+  historyCount,
+  historyOpen,
+  onToggleHistory,
   rawLength,
 }) => {
   const t = translations[lang];
@@ -74,7 +88,21 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
       </div>
 
       {/* Action Buttons Toolbar */}
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center flex-wrap gap-1.5">
+        {/* Auto-Clip Toggle */}
+        <button
+          onClick={onToggleAutoClip}
+          className={`flex items-center gap-1 px-2 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+            autoClip
+              ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300'
+              : 'bg-cat-card/60 border-cat-border/60 text-gray-400 hover:text-gray-200'
+          }`}
+          title={t.toolbar.autoClip}
+        >
+          <Zap className="w-3.5 h-3.5" />
+          <span>{t.toolbar.autoClip}</span>
+        </button>
+
         {/* Paste Clipboard */}
         <button
           onClick={onPasteClipboard}
@@ -95,6 +123,34 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
           <span className={copied ? 'text-emerald-400 font-bold' : ''}>
             {copied ? t.app.copied : t.toolbar.copy}
           </span>
+        </button>
+
+        {/* Save File */}
+        {rawLength > 0 && (
+          <button
+            onClick={onSaveFile}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-cat-card hover:bg-cat-cardHover border border-cat-border text-xs text-gray-200 font-medium transition-all active:scale-95 shadow-sm"
+            title={t.toolbar.saveFile}
+          >
+            {saved ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Download className="w-3.5 h-3.5 text-sky-400" />}
+            <span className={saved ? 'text-emerald-400 font-bold' : ''}>
+              {saved ? t.app.saved : t.toolbar.saveFile}
+            </span>
+          </button>
+        )}
+
+        {/* History Toggle */}
+        <button
+          onClick={onToggleHistory}
+          className={`flex items-center gap-1 px-2 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+            historyOpen
+              ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
+              : 'bg-cat-card/60 hover:bg-cat-card border-cat-border/60 text-gray-300'
+          }`}
+          title={t.toolbar.history}
+        >
+          <History className="w-3.5 h-3.5" />
+          <span>{t.toolbar.history} ({historyCount})</span>
         </button>
 
         {/* Load Sample */}

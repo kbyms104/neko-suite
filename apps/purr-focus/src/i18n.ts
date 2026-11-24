@@ -4,7 +4,7 @@ export const translations = {
   ko: {
     app: {
       name: 'Purr Focus',
-      version: 'v0.4.0',
+      version: 'v1.1.0',
       badge: '포모도로 데스크톱 펫',
       focusMode: '집중 세션',
       breakMode: '휴식 세션',
@@ -14,9 +14,11 @@ export const translations = {
       soundOn: '소리 켜짐',
       soundOff: '음소거됨',
       settings: '타이머 설정',
+      hideToTray: '트레이로 숨기기',
       minimize: '최소화',
       quit: '종료',
       petHint: '고양이를 쓰다듬으면 가르랑거립니다!',
+      todayFish: (count: number) => `오늘 완료한 집중 세션: ${count}회 🐟`,
     },
     timer: {
       focusTag: '25분 집중',
@@ -58,7 +60,7 @@ export const translations = {
   en: {
     app: {
       name: 'Purr Focus',
-      version: 'v0.4.0',
+      version: 'v1.1.0',
       badge: 'Pomodoro Desktop Pet',
       focusMode: 'Focus Session',
       breakMode: 'Break & Stretch',
@@ -68,9 +70,11 @@ export const translations = {
       soundOn: 'Sound On',
       soundOff: 'Muted',
       settings: 'Timer Settings',
+      hideToTray: 'Hide to Tray',
       minimize: 'Minimize',
       quit: 'Close',
       petHint: 'Pet the cat to hear it purr!',
+      todayFish: (count: number) => `Completed focus sessions today: ${count} 🐟`,
     },
     timer: {
       focusTag: '25m Focus',

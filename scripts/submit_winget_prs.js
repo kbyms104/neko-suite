@@ -1,13 +1,30 @@
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
-const token = process.env.GITHUB_TOKEN || '';
+function resolveGitHubToken() {
+  if (process.env.GITHUB_TOKEN) {
+    return process.env.GITHUB_TOKEN.trim();
+  }
+  try {
+    const out = execSync('git credential fill', {
+      input: 'protocol=https\nhost=github.com\n\n',
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'ignore']
+    });
+    const line = out.split(/\r?\n/).find((l) => l.startsWith('password='));
+    if (line) return line.slice('password='.length).trim();
+  } catch {}
+  return '';
+}
+
+const token = resolveGitHubToken();
 const owner = 'kbyms104';
 const upstreamOwner = 'microsoft';
 const repo = 'winget-pkgs';
 
 const headers = {
-  'Authorization': 'token ' + token,
+  'Authorization': 'Bearer ' + token,
   'User-Agent': 'NekoSuite-WinGetBot',
   'Accept': 'application/vnd.github.v3+json',
   'Content-Type': 'application/json'
@@ -30,34 +47,53 @@ const packages = [
   {
     id: 'NekoSuite.PurrFocus',
     folder: 'PurrFocus',
-    version: '0.4.1',
-    branch: 'add-purr-focus-0.4.1',
+    version: '1.1.0',
+    branch: 'add-purr-focus-1.1.0',
+    previousPr: 431215,
     name: 'Purr Focus'
   },
   {
     id: 'NekoSuite.NekoDrop',
     folder: 'NekoDrop',
-    version: '0.1.0',
-    branch: 'add-neko-drop-0.1.0',
+    version: '1.1.0',
+    branch: 'add-neko-drop-1.1.0',
+    previousPr: 431216,
     name: 'Neko Drop'
   },
   {
     id: 'NekoSuite.NekoPunch',
     folder: 'NekoPunch',
-    version: '0.2.0',
-    branch: 'add-neko-punch-0.2.0',
+    version: '1.1.0',
+    branch: 'add-neko-punch-1.1.0',
+    previousPr: 431217,
     name: 'Neko Punch'
   },
   {
     id: 'NekoSuite.BongoFormat',
     folder: 'BongoFormat',
-    version: '0.3.0',
-    branch: 'add-bongo-format-0.3.0',
+    version: '1.1.0',
+    branch: 'add-bongo-format-1.1.0',
+    previousPr: 431218,
     name: 'Bongo Format'
   }
 ];
 
 async function run() {
+  if (!token) {
+    console.error('Error: GitHub token not found in GITHUB_TOKEN or git credential helper.');
+    process.exit(1);
+  }
+
+  console.log('Syncing fork master with upstream microsoft/winget-pkgs...');
+  try {
+    const syncRes = await api(`/repos/${owner}/${repo}/merge-upstream`, 'POST', {
+      branch: 'master'
+    });
+    console.log('Fork sync:', syncRes.message || 'Up to date');
+  } catch (err) {
+    console.warn('Warning: Could not sync fork master automatically:', err.message);
+  }
+
   console.log('Fetching master ref from fork...');
   const masterRef = await api(`/repos/${owner}/${repo}/git/ref/heads/master`);
   const masterSha = masterRef.object.sha;
@@ -109,7 +145,7 @@ async function run() {
 - [x] The package complies with the [Quality & Security Guidelines](https://github.com/microsoft/winget-pkgs/blob/master/doc/policies/QualityAndSecurity.md).
 
 ### Description
-New package submission for \`${pkg.id}\` version \`${pkg.version}\`.
+New package submission for \`${pkg.id}\` version \`${pkg.version}\` (supersedes previously stale PR #${pkg.previousPr}, updated to v1.1.0 release and \`ManifestVersion: 1.28.0\`).
 Ultra-lightweight Windows desktop utility from the Neko Suite project.
 Official Website: https://kbyms104.github.io/neko-suite/
 Project Repository: https://github.com/kbyms104/neko-suite`;
@@ -123,7 +159,7 @@ Project Repository: https://github.com/kbyms104/neko-suite`;
         body: prBody
       });
       console.log(`🎉 Pull Request created successfully! URL: ${pr.html_url}`);
-      prResults.push({ id: pkg.id, url: pr.html_url, status: 'CREATED' });
+      prResults.push({ id: pkg.id, number: pr.number, url: pr.html_url, status: 'CREATED' });
     } catch (err) {
       console.error(`Error creating PR for ${pkg.id}:`, err.message);
       prResults.push({ id: pkg.id, error: err.message, status: 'FAILED' });
@@ -136,4 +172,7 @@ Project Repository: https://github.com/kbyms104/neko-suite`;
   console.log(JSON.stringify(prResults, null, 2));
 }
 
-run().catch(console.error);
+run().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

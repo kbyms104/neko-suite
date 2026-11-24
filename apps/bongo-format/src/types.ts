@@ -34,3 +34,11 @@ export interface JwtPayload {
   expiresAtFormatted?: string;
   issuedAtFormatted?: string;
 }
+
+export interface HistoryItem {
+  id: string;
+  type: Exclude<FormatType, 'auto'>;
+  preview: string;
+  content: string;
+  timestamp: number;
+}

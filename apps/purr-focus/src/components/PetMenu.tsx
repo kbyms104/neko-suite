@@ -1,5 +1,5 @@
 import React from 'react';
-import { Volume2, VolumeX, Settings, Move, MousePointerClick, Minus, X } from 'lucide-react';
+import { Volume2, VolumeX, Settings, Move, MousePointerClick, Minus, X, EyeOff } from 'lucide-react';
 import { Language, translations } from '../i18n';
 import { sounds } from '../sound';
 
@@ -11,6 +11,7 @@ interface PetMenuProps {
   clickThrough: boolean;
   onToggleClickThrough: () => void;
   onOpenSettings: () => void;
+  completedSessions: number;
 }
 
 export const PetMenu: React.FC<PetMenuProps> = ({
@@ -21,6 +22,7 @@ export const PetMenu: React.FC<PetMenuProps> = ({
   clickThrough,
   onToggleClickThrough,
   onOpenSettings,
+  completedSessions,
 }) => {
   const t = translations[lang];
 
@@ -33,6 +35,14 @@ export const PetMenu: React.FC<PetMenuProps> = ({
         await invoke('start_drag_window');
       } catch {}
     }
+  };
+
+  const handleHide = async () => {
+    sounds.playPop();
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('hide_window');
+    } catch {}
   };
 
   const handleMinimize = async () => {
@@ -57,10 +67,18 @@ export const PetMenu: React.FC<PetMenuProps> = ({
       data-tauri-drag-region
       className="w-full flex items-center justify-between px-3 py-1.5 rounded-2xl bg-[#14151e]/80 backdrop-blur-md border border-white/10 shadow-md select-none transition-opacity duration-200 cursor-move"
     >
-      {/* Left: Drag Handle Indicator & Brand */}
-      <div className="flex items-center gap-1.5 text-gray-400 pointer-events-none">
-        <Move className="w-3.5 h-3.5 text-cat-primary" />
-        <span className="text-[11px] font-bold text-white tracking-wide">Purr Focus</span>
+      {/* Left: Drag Handle Indicator, Brand & Session Count */}
+      <div className="flex items-center gap-1.5 text-gray-400 pointer-events-none min-w-0">
+        <Move className="w-3.5 h-3.5 text-cat-primary shrink-0" />
+        <span className="text-[11px] font-bold text-white tracking-wide truncate">Purr Focus</span>
+        {completedSessions > 0 && (
+          <span
+            title={t.app.todayFish(completedSessions)}
+            className="pointer-events-auto text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0"
+          >
+            🐟{completedSessions}
+          </span>
+        )}
       </div>
 
       {/* Right: Controls */}
@@ -102,6 +120,15 @@ export const PetMenu: React.FC<PetMenuProps> = ({
           className="px-1 py-0.5 rounded text-[10px] font-bold bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition-all"
         >
           {lang === 'ko' ? 'ENG' : 'KR'}
+        </button>
+
+        {/* Hide to Tray Button */}
+        <button
+          onClick={handleHide}
+          title={t.app.hideToTray}
+          className="p-1 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-all"
+        >
+          <EyeOff className="w-3 h-3" />
         </button>
 
         {/* Minimize Button */}

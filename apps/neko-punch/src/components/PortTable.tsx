@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Star, Plus, X } from 'lucide-react';
+import { Search, Star, Plus, X, Copy, Check, Zap } from 'lucide-react';
 import { Language, translations } from '../i18n';
 import { sounds } from '../sound';
 import catPawImg from '../assets/cat_paw.png';
@@ -9,6 +9,7 @@ export interface PortProcess {
   port: number;
   pid: number;
   name: string;
+  cmd_hint?: string;
   memory_mb: number;
   protocol: string;
   local_addr: string;
@@ -18,6 +19,7 @@ interface PortTableProps {
   ports: PortProcess[];
   lang: Language;
   onPunch: (port: PortProcess) => Promise<boolean>;
+  onBatchPunch?: (ports: PortProcess[]) => Promise<number[]>;
   isScanning?: boolean;
 }
 
@@ -30,12 +32,14 @@ export const PortTable: React.FC<PortTableProps> = ({
   ports,
   lang,
   onPunch,
+  onBatchPunch,
 }) => {
   const t = translations[lang];
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [punchingPid, setPunchingPid] = useState<number | null>(null);
   const [killedPids, setKilledPids] = useState<Set<number>>(new Set());
+  const [copiedPid, setCopiedPid] = useState<number | null>(null);
 
   // 사용자 지정 커스텀 포트 목록 (LocalStorage 영구 보존)
   const [customPorts, setCustomPorts] = useState<number[]>(() => {
@@ -130,12 +134,39 @@ export const PortTable: React.FC<PortTableProps> = ({
       const query = searchQuery.toLowerCase().trim();
       const matchPort = item.port.toString().includes(query);
       const matchName = item.name.toLowerCase().includes(query);
+      const matchHint = (item.cmd_hint || '').toLowerCase().includes(query);
       const matchPid = item.pid.toString().includes(query);
-      return matchPort || matchName || matchPid;
+      return matchPort || matchName || matchHint || matchPid;
     }
 
     return true;
   });
+
+  const killableFiltered = filteredPorts.filter((p) => p.pid > 4 && !killedPids.has(p.pid));
+  const showBatchPunch =
+    onBatchPunch &&
+    killableFiltered.length >= 2 &&
+    (filterTab !== 'all' || searchQuery.trim().length > 0);
+
+  const handleCopyPid = (pid: number) => {
+    sounds.playPop();
+    navigator.clipboard?.writeText(String(pid)).catch(() => {});
+    setCopiedPid(pid);
+    setTimeout(() => setCopiedPid((curr) => (curr === pid ? null : curr)), 1200);
+  };
+
+  const handleBatchPunchClick = async () => {
+    if (!onBatchPunch || killableFiltered.length === 0) return;
+    sounds.playPunch();
+    const killed = await onBatchPunch(killableFiltered);
+    if (killed.length > 0) {
+      setKilledPids((prev) => {
+        const next = new Set(prev);
+        killed.forEach((p) => next.add(p));
+        return next;
+      });
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-[#121319]">
@@ -259,16 +290,28 @@ export const PortTable: React.FC<PortTableProps> = ({
           </div>
         )}
 
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="w-3.5 h-3.5 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t.filters.searchPlaceholder}
-            className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#0e0f14] border border-cat-border/80 text-xs text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-cat-primary transition-colors"
-          />
+        {/* Search Bar & Optional Batch Kill */}
+        <div className="flex items-center gap-1.5">
+          <div className="relative flex-1">
+            <Search className="w-3.5 h-3.5 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t.filters.searchPlaceholder}
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#0e0f14] border border-cat-border/80 text-xs text-gray-200 placeholder:text-gray-600 focus:outline-none focus:border-cat-primary transition-colors"
+            />
+          </div>
+          {showBatchPunch && (
+            <button
+              onClick={handleBatchPunchClick}
+              className="px-2.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/40 text-[11px] font-bold flex items-center gap-1 shrink-0 transition-all active:scale-95"
+              title={t.filters.batchPunchBtn(killableFiltered.length)}
+            >
+              <Zap className="w-3 h-3" />
+              <span>{t.filters.batchPunchBtn(killableFiltered.length)}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -381,7 +424,12 @@ export const PortTable: React.FC<PortTableProps> = ({
 
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-gray-100 truncate flex items-center gap-1.5">
-                      <span>{proc.name}</span>
+                      <span className="truncate">{proc.name}</span>
+                      {proc.cmd_hint && (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/25 font-mono truncate max-w-[120px]">
+                          {proc.cmd_hint}
+                        </span>
+                      )}
                       {isCritical && (
                         <span className="text-[10px] px-1 py-0.2 rounded bg-red-500/20 text-red-400 border border-red-500/30">
                           시스템
@@ -389,7 +437,19 @@ export const PortTable: React.FC<PortTableProps> = ({
                       )}
                     </div>
                     <div className="text-[10px] font-mono text-gray-400 flex items-center gap-2 mt-0.5">
-                      <span>PID: {proc.pid}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyPid(proc.pid)}
+                        title={t.filters.copyPid}
+                        className="inline-flex items-center gap-1 hover:text-amber-300 transition-colors"
+                      >
+                        <span>PID: {proc.pid}</span>
+                        {copiedPid === proc.pid ? (
+                          <Check className="w-2.5 h-2.5 text-emerald-400" />
+                        ) : (
+                          <Copy className="w-2.5 h-2.5 opacity-60" />
+                        )}
+                      </button>
                       <span>•</span>
                       <span>{proc.memory_mb > 0 ? `${proc.memory_mb} MB` : '-'}</span>
                     </div>

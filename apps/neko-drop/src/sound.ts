@@ -2,6 +2,15 @@
 
 class SoundEngine {
   private ctx: AudioContext | null = null;
+  private muted: boolean = false;
+
+  setMuted(muted: boolean) {
+    this.muted = muted;
+  }
+
+  isMuted(): boolean {
+    return this.muted;
+  }
 
   private getContext(): AudioContext {
     if (!this.ctx) {
@@ -14,8 +23,29 @@ class SoundEngine {
     return this.ctx;
   }
 
+  // 가벼운 UI 클릭 팝 사운드
+  playPop() {
+    if (this.muted) return;
+    try {
+      const ctx = this.getContext();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(620, now);
+      osc.frequency.exponentialRampToValueAtTime(920, now + 0.05);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.07);
+    } catch {}
+  }
+
   // 1. 우걱우걱 먹방 (바삭/크런치 노이즈 + 피치 모듈레이션)
   playMunch() {
+    if (this.muted) return;
     const ctx = this.getContext();
     const now = ctx.currentTime;
 
@@ -64,6 +94,7 @@ class SoundEngine {
 
   // 2. 챱챱 쫀득한 씹기
   playChomp() {
+    if (this.muted) return;
     const ctx = this.getContext();
     const now = ctx.currentTime;
 
@@ -86,6 +117,7 @@ class SoundEngine {
 
   // 3. 변환 성공 시 시원한 트림 ("꺼억~") 또는 기쁨의 멜로디
   playSuccessBurp() {
+    if (this.muted) return;
     const ctx = this.getContext();
     const now = ctx.currentTime;
 
@@ -122,6 +154,7 @@ class SoundEngine {
 
   // 성공 챠임음 (반짝반짝)
   playChime() {
+    if (this.muted) return;
     const ctx = this.getContext();
     const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
     const now = ctx.currentTime;
@@ -147,6 +180,7 @@ class SoundEngine {
 
   // 4. 거부 (냥펀치 쳐내기 & 킁킁 하악 사운드)
   playRejectPunch() {
+    if (this.muted) return;
     const ctx = this.getContext();
     const now = ctx.currentTime;
 

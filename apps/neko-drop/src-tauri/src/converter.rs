@@ -1,4 +1,5 @@
 use std::fs::File;
+use std::io::{Cursor, Write};
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -82,8 +83,13 @@ impl Converter {
                 match target.as_str() {
                     "json" => {
                         let out = Self::get_output_path(input_path, "json");
-                        let rows = Self::csv_to_json(input_path, &out)?;
+                        let rows = Self::csv_to_json(input_path, &out, false)?;
                         (out, "CSV".to_string(), "JSON".to_string(), rows)
+                    }
+                    "jsonl" => {
+                        let out = Self::get_output_path(input_path, "jsonl");
+                        let rows = Self::csv_to_json(input_path, &out, true)?;
+                        (out, "CSV".to_string(), "JSONL".to_string(), rows)
                     }
                     "parquet" => {
                         let out = Self::get_output_path(input_path, "parquet");
@@ -102,8 +108,13 @@ impl Converter {
                 match target.as_str() {
                     "json" => {
                         let out = Self::get_output_path(input_path, "json");
-                        let rows = Self::parquet_to_json(input_path, &out)?;
+                        let rows = Self::parquet_to_json(input_path, &out, false)?;
                         (out, "Parquet".to_string(), "JSON".to_string(), rows)
+                    }
+                    "jsonl" => {
+                        let out = Self::get_output_path(input_path, "jsonl");
+                        let rows = Self::parquet_to_json(input_path, &out, true)?;
+                        (out, "Parquet".to_string(), "JSONL".to_string(), rows)
                     }
                     "csv" => {
                         let out = Self::get_output_path(input_path, "csv");
@@ -118,20 +129,32 @@ impl Converter {
 
             // 3. JSON / JSONL 입력
             "json" | "jsonl" => {
+                let prefer_lines = extension == "jsonl";
+                let from_label = if prefer_lines { "JSONL" } else { "JSON" };
                 let target = target_format_override.unwrap_or("csv").to_lowercase();
                 match target.as_str() {
                     "parquet" => {
                         let out = Self::get_output_path(input_path, "parquet");
-                        let rows = Self::json_to_parquet(input_path, &out)?;
-                        (out, "JSON".to_string(), "Parquet".to_string(), rows)
+                        let rows = Self::json_to_parquet(input_path, &out, prefer_lines)?;
+                        (out, from_label.to_string(), "Parquet".to_string(), rows)
                     }
                     "csv" => {
                         let out = Self::get_output_path(input_path, "csv");
-                        let rows = Self::json_to_csv(input_path, &out)?;
-                        (out, "JSON".to_string(), "CSV".to_string(), rows)
+                        let rows = Self::json_to_csv(input_path, &out, prefer_lines)?;
+                        (out, from_label.to_string(), "CSV".to_string(), rows)
+                    }
+                    "json" => {
+                        let out = Self::get_output_path(input_path, "json");
+                        let rows = Self::json_to_json(input_path, &out, prefer_lines, false)?;
+                        (out, from_label.to_string(), "JSON".to_string(), rows)
+                    }
+                    "jsonl" => {
+                        let out = Self::get_output_path(input_path, "jsonl");
+                        let rows = Self::json_to_json(input_path, &out, prefer_lines, true)?;
+                        (out, from_label.to_string(), "JSONL".to_string(), rows)
                     }
                     other => {
-                        return Err(ConverterError::UnsupportedConversion("JSON".into(), other.into()));
+                        return Err(ConverterError::UnsupportedConversion(from_label.into(), other.into()));
                     }
                 }
             }
@@ -147,8 +170,13 @@ impl Converter {
                     }
                     "json" => {
                         let out = Self::get_output_path(input_path, "json");
-                        let rows = Self::xlsx_to_json(input_path, &out)?;
+                        let rows = Self::xlsx_to_json(input_path, &out, false)?;
                         (out, "Excel".to_string(), "JSON".to_string(), rows)
+                    }
+                    "jsonl" => {
+                        let out = Self::get_output_path(input_path, "jsonl");
+                        let rows = Self::xlsx_to_json(input_path, &out, true)?;
+                        (out, "Excel".to_string(), "JSONL".to_string(), rows)
                     }
                     "csv" => {
                         let out = Self::get_output_path(input_path, "csv");
@@ -213,6 +241,47 @@ impl Converter {
 
     // --- Core Converters ---
 
+    fn write_json_df(df: &mut DataFrame, output: &Path, as_lines: bool) -> Result<(), ConverterError> {
+        let mut file = File::create(output)?;
+        let format = if as_lines {
+            JsonFormat::JsonLines
+        } else {
+            JsonFormat::Json
+        };
+        JsonWriter::new(&mut file).with_json_format(format).finish(df)?;
+        Ok(())
+    }
+
+    fn read_json_df(input: &Path, prefer_lines: bool) -> Result<DataFrame, ConverterError> {
+        let primary = if prefer_lines {
+            JsonFormat::JsonLines
+        } else {
+            JsonFormat::Json
+        };
+        let fallback = if prefer_lines {
+            JsonFormat::Json
+        } else {
+            JsonFormat::JsonLines
+        };
+
+        let file = File::open(input)?;
+        match JsonReader::new(file)
+            .with_json_format(primary)
+            .infer_schema_len(NonZeroUsize::new(1000))
+            .finish()
+        {
+            Ok(df) => Ok(df),
+            Err(primary_err) => {
+                let file2 = File::open(input)?;
+                JsonReader::new(file2)
+                    .with_json_format(fallback)
+                    .infer_schema_len(NonZeroUsize::new(1000))
+                    .finish()
+                    .map_err(|_| ConverterError::PolarsError(primary_err))
+            }
+        }
+    }
+
     /// CSV -> Parquet
     fn csv_to_parquet(input: &Path, output: &Path) -> Result<usize, ConverterError> {
         let mut df = LazyCsvReader::new(input)
@@ -231,19 +300,17 @@ impl Converter {
         Ok(row_count)
     }
 
-    /// CSV -> JSON
-    fn csv_to_json(input: &Path, output: &Path) -> Result<usize, ConverterError> {
+    /// CSV -> JSON / JSONL
+    fn csv_to_json(input: &Path, output: &Path, as_lines: bool) -> Result<usize, ConverterError> {
         let mut df = LazyCsvReader::new(input)
             .with_has_header(true)
+            .with_try_parse_dates(true)
+            .with_infer_schema_length(Some(10000))
             .finish()?
             .collect()?;
 
         let row_count = df.height();
-        let mut file = File::create(output)?;
-        JsonWriter::new(&mut file)
-            .with_json_format(JsonFormat::Json)
-            .finish(&mut df)?;
-
+        Self::write_json_df(&mut df, output, as_lines)?;
         Ok(row_count)
     }
 
@@ -261,29 +328,21 @@ impl Converter {
         Ok(row_count)
     }
 
-    /// Parquet -> JSON
-    fn parquet_to_json(input: &Path, output: &Path) -> Result<usize, ConverterError> {
+    /// Parquet -> JSON / JSONL
+    fn parquet_to_json(input: &Path, output: &Path, as_lines: bool) -> Result<usize, ConverterError> {
         let file = File::open(input)?;
         let mut df = ParquetReader::new(file).finish()?;
         let row_count = df.height();
 
-        let mut out_file = File::create(output)?;
-        JsonWriter::new(&mut out_file)
-            .with_json_format(JsonFormat::Json)
-            .finish(&mut df)?;
-
+        Self::write_json_df(&mut df, output, as_lines)?;
         Ok(row_count)
     }
 
-    /// JSON -> CSV
-    fn json_to_csv(input: &Path, output: &Path) -> Result<usize, ConverterError> {
-        let file = File::open(input)?;
-        let mut df = JsonReader::new(file)
-            .with_json_format(JsonFormat::Json)
-            .infer_schema_len(NonZeroUsize::new(1000))
-            .finish()?;
-
+    /// JSON / JSONL -> CSV
+    fn json_to_csv(input: &Path, output: &Path, prefer_lines: bool) -> Result<usize, ConverterError> {
+        let mut df = Self::read_json_df(input, prefer_lines)?;
         let row_count = df.height();
+
         let mut out_file = File::create(output)?;
         CsvWriter::new(&mut out_file)
             .include_header(true)
@@ -292,15 +351,11 @@ impl Converter {
         Ok(row_count)
     }
 
-    /// JSON -> Parquet
-    fn json_to_parquet(input: &Path, output: &Path) -> Result<usize, ConverterError> {
-        let file = File::open(input)?;
-        let mut df = JsonReader::new(file)
-            .with_json_format(JsonFormat::Json)
-            .infer_schema_len(NonZeroUsize::new(1000))
-            .finish()?;
-
+    /// JSON / JSONL -> Parquet
+    fn json_to_parquet(input: &Path, output: &Path, prefer_lines: bool) -> Result<usize, ConverterError> {
+        let mut df = Self::read_json_df(input, prefer_lines)?;
         let row_count = df.height();
+
         let mut out_file = File::create(output)?;
         ParquetWriter::new(&mut out_file)
             .with_compression(ParquetCompression::Snappy)
@@ -309,8 +364,21 @@ impl Converter {
         Ok(row_count)
     }
 
-    /// XLSX -> CSV
-    fn xlsx_to_csv(input: &Path, output: &Path) -> Result<usize, ConverterError> {
+    /// JSON <-> JSONL
+    fn json_to_json(
+        input: &Path,
+        output: &Path,
+        prefer_lines: bool,
+        as_lines: bool,
+    ) -> Result<usize, ConverterError> {
+        let mut df = Self::read_json_df(input, prefer_lines)?;
+        let row_count = df.height();
+        Self::write_json_df(&mut df, output, as_lines)?;
+        Ok(row_count)
+    }
+
+    /// Excel first sheet range helper
+    fn load_excel_first_sheet(input: &Path) -> Result<Range<Data>, ConverterError> {
         let mut workbook = open_workbook_auto(input)
             .map_err(|e| ConverterError::ExcelError(e.to_string()))?;
 
@@ -319,39 +387,55 @@ impl Converter {
             .first()
             .ok_or_else(|| ConverterError::ExcelError("엑셀 시트가 비어있습니다.".into()))?;
 
-        let range = workbook
+        workbook
             .worksheet_range(first_sheet)
-            .map_err(|e| ConverterError::ExcelError(e.to_string()))?;
+            .map_err(|e| ConverterError::ExcelError(e.to_string()))
+    }
 
-        let row_count = Self::write_range_to_csv(&range, output)?;
+    /// XLSX -> CSV (직접 파일 스트리밍)
+    fn xlsx_to_csv(input: &Path, output: &Path) -> Result<usize, ConverterError> {
+        let range = Self::load_excel_first_sheet(input)?;
+        let file = File::create(output)?;
+        Self::write_range_to_csv_writer(&range, file)
+    }
+
+    /// XLSX -> Polars DataFrame (디스크 임시 파일 없이 인메모리 변환)
+    fn xlsx_to_df(input: &Path) -> Result<(DataFrame, usize), ConverterError> {
+        let range = Self::load_excel_first_sheet(input)?;
+        let mut buffer: Vec<u8> = Vec::new();
+        let row_count = Self::write_range_to_csv_writer(&range, &mut buffer)?;
+
+        let df = CsvReadOptions::default()
+            .with_has_header(true)
+            .with_infer_schema_length(Some(10000))
+            .into_reader_with_file_handle(Cursor::new(buffer))
+            .finish()?;
+
+        Ok((df, row_count))
+    }
+
+    /// XLSX -> Parquet (인메모리 파이프라인)
+    fn xlsx_to_parquet(input: &Path, output: &Path) -> Result<usize, ConverterError> {
+        let (mut df, row_count) = Self::xlsx_to_df(input)?;
+        let mut file = File::create(output)?;
+        ParquetWriter::new(&mut file)
+            .with_compression(ParquetCompression::Snappy)
+            .finish(&mut df)?;
         Ok(row_count)
     }
 
-    /// XLSX -> Parquet (임시 CSV 메모리 파이프라인 거쳐 고속 Parquet 생성)
-    fn xlsx_to_parquet(input: &Path, output: &Path) -> Result<usize, ConverterError> {
-        let temp_csv_path = output.with_extension("tmp.csv");
-        let row_count = Self::xlsx_to_csv(input, &temp_csv_path)?;
-        
-        let convert_res = Self::csv_to_parquet(&temp_csv_path, output);
-        let _ = std::fs::remove_file(&temp_csv_path);
-        
-        convert_res.map(|_| row_count)
+    /// XLSX -> JSON / JSONL (인메모리 파이프라인)
+    fn xlsx_to_json(input: &Path, output: &Path, as_lines: bool) -> Result<usize, ConverterError> {
+        let (mut df, row_count) = Self::xlsx_to_df(input)?;
+        Self::write_json_df(&mut df, output, as_lines)?;
+        Ok(row_count)
     }
 
-    /// XLSX -> JSON
-    fn xlsx_to_json(input: &Path, output: &Path) -> Result<usize, ConverterError> {
-        let temp_csv_path = output.with_extension("tmp.csv");
-        let row_count = Self::xlsx_to_csv(input, &temp_csv_path)?;
-        
-        let convert_res = Self::csv_to_json(&temp_csv_path, output);
-        let _ = std::fs::remove_file(&temp_csv_path);
-        
-        convert_res.map(|_| row_count)
-    }
-
-    fn write_range_to_csv(range: &Range<Data>, output: &Path) -> Result<usize, ConverterError> {
-        let file = File::create(output)?;
-        let mut wtr = csv::WriterBuilder::new().from_writer(file);
+    fn write_range_to_csv_writer<W: Write>(
+        range: &Range<Data>,
+        writer: W,
+    ) -> Result<usize, ConverterError> {
+        let mut wtr = csv::WriterBuilder::new().from_writer(writer);
         let mut count = 0;
 
         for row in range.rows() {

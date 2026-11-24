@@ -1,6 +1,6 @@
 [package]
 name = "neko-drop"
-version = "0.1.0"
+version = "1.1.0"
 description = "Neko Drop - Ultra-fast local file conversion utility powered by Polars & Tauri v2"
 authors = ["Neko Suite Team"]
 edition = "2021"

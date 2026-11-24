@@ -1,12 +1,12 @@
 {
-  "version": "0.4.1",
+  "version": "1.1.0",
   "description": "Ultra-lightweight cat-themed Pomodoro desktop pet timer with kneading animation and 32Hz purring audio.",
   "homepage": "https://kbyms104.github.io/neko-suite/",
   "license": "MIT",
   "architecture": {
     "64bit": {
-      "url": "https://github.com/kbyms104/neko-suite/releases/download/v1.0.0/Purr_Focus.exe",
-      "hash": "0c8235fa8f189073ae4212b9f27a295b224abbff1a6c1942f7bc2ef822efcdf1",
+      "url": "https://github.com/kbyms104/neko-suite/releases/download/v1.1.0/Purr_Focus.exe",
+      "hash": "806fb1796053e6e878e37cbcb71b60cf1dd151e49c383a18366e082539bc27cd",
       "bin": [
         [
           "Purr_Focus.exe",

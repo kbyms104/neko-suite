@@ -1,5 +1,5 @@
 import React from 'react';
-import { Volume2, VolumeX, RefreshCw, Minus, X } from 'lucide-react';
+import { Volume2, VolumeX, RefreshCw, Minus, X, EyeOff } from 'lucide-react';
 import { Language, translations } from '../i18n';
 import { sounds } from '../sound';
 import catBoxerImg from '../assets/cat_boxer.png';
@@ -50,6 +50,17 @@ export const TitleBar: React.FC<TitleBarProps> = ({
     }
   };
 
+  // Rust 백엔드 커맨드로 창 트레이 숨기기
+  const handleHideToTray = async () => {
+    sounds.playPop();
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke('hide_window');
+    } catch (e) {
+      console.log('hide fallback');
+    }
+  };
+
   // Rust 백엔드 커맨드로 창 닫기 및 앱 종료
   const handleExitApp = async () => {
     sounds.playPop();
@@ -83,7 +94,7 @@ export const TitleBar: React.FC<TitleBarProps> = ({
         <div className="flex items-center gap-1.5 pointer-events-none">
           <span className="font-bold text-sm text-white tracking-wide">Neko Punch</span>
           <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
-            v0.2
+            v1.1
           </span>
         </div>
       </div>
@@ -123,6 +134,15 @@ export const TitleBar: React.FC<TitleBarProps> = ({
         </button>
 
         <div className="w-[1px] h-3 bg-cat-border/80 mx-1" />
+
+        {/* Hide to Tray Button */}
+        <button
+          onClick={handleHideToTray}
+          title={t.app.hideToTray}
+          className="p-1.5 rounded-lg hover:bg-cat-card text-gray-400 hover:text-white transition-all"
+        >
+          <EyeOff className="w-3.5 h-3.5" />
+        </button>
 
         {/* Minimize Button */}
         <button

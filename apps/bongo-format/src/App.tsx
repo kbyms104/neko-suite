@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { TitleBar } from './components/TitleBar';
 import { BongoCatHeader } from './components/BongoCatHeader';
 import { ModeSelector } from './components/ModeSelector';
@@ -7,10 +7,11 @@ import { SqlViewer } from './components/viewers/SqlViewer';
 import { CsvViewer } from './components/viewers/CsvViewer';
 import { JwtViewer } from './components/viewers/JwtViewer';
 import { TextViewer } from './components/viewers/TextViewer';
-import { FormatType, CsvData, JsonFormatResult } from './types';
+import { FormatType, CsvData, JsonFormatResult, HistoryItem } from './types';
 import { detectFormat } from './utils/formatDetector';
 import { Language, translations } from './i18n';
 import { sounds } from './sound';
+import { History, Trash2, X } from 'lucide-react';
 
 // Sample datasets
 const SAMPLES: Record<Exclude<FormatType, 'auto'>, string> = {
@@ -22,9 +23,39 @@ const SAMPLES: Record<Exclude<FormatType, 'auto'>, string> = {
 };
 
 export default function App() {
-  const [lang, setLang] = useState<Language>('ko');
-  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [lang, setLang] = useState<Language>(() => {
+    try {
+      const saved = localStorage.getItem('bongo_format_lang');
+      if (saved === 'en' || saved === 'ko') return saved;
+    } catch {}
+    return 'ko';
+  });
+  const [isMuted, setIsMuted] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('bongo_format_muted') === 'true';
+      sounds.setMuted(saved);
+      return saved;
+    } catch {
+      return false;
+    }
+  });
   const [alwaysOnTop, setAlwaysOnTop] = useState<boolean>(false);
+  const [autoClip, setAutoClip] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('bongo_format_autoclip');
+      return saved === null ? true : saved === 'true';
+    } catch {
+      return true;
+    }
+  });
+  const [historyOpen, setHistoryOpen] = useState<boolean>(false);
+  const [history, setHistory] = useState<HistoryItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('bongo_format_history');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
 
   // Formatting states
   const [activeType, setActiveType] = useState<FormatType>('auto');
@@ -33,6 +64,12 @@ export default function App() {
   const [isFormatted, setIsFormatted] = useState<boolean>(false);
   const [bongoPaw, setBongoPaw] = useState<'left' | 'right' | 'idle'>('idle');
   const [copied, setCopied] = useState<boolean>(false);
+  const [saved, setSaved] = useState<boolean>(false);
+  const lastAutoClipRef = useRef<string>('');
+  const rawTextRef = useRef<string>(rawText);
+  rawTextRef.current = rawText;
+
+  const t = translations[lang];
 
   // Formatted representations
   const [formattedJson, setFormattedJson] = useState<string>('');
@@ -48,6 +85,33 @@ export default function App() {
   // Format detection
   const detected = useMemo(() => detectFormat(rawText), [rawText]);
   const effectiveType: FormatType = activeType === 'auto' ? detected.type : activeType;
+
+  // Persist preferences & history
+  useEffect(() => {
+    try {
+      localStorage.setItem('bongo_format_history', JSON.stringify(history));
+    } catch {}
+  }, [history]);
+
+  const pushHistory = useCallback((content: string, type: FormatType) => {
+    const trimmed = content.trim();
+    if (!trimmed) return;
+    const resolvedType: Exclude<FormatType, 'auto'> =
+      type === 'auto' ? (detectFormat(trimmed).type as Exclude<FormatType, 'auto'>) : type;
+    const preview = trimmed.replace(/\s+/g, ' ').slice(0, 72);
+    setHistory((prev) => {
+      if (prev.length > 0 && prev[0].content === content) return prev;
+      const filtered = prev.filter((item) => item.content !== content);
+      const next: HistoryItem = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        type: resolvedType,
+        preview,
+        content,
+        timestamp: Date.now(),
+      };
+      return [next, ...filtered].slice(0, 10);
+    });
+  }, []);
 
   // Run initial formatting once on mount
   useEffect(() => {
@@ -135,41 +199,71 @@ export default function App() {
     }
   };
 
-  // Paste from clipboard handler
-  const handlePasteClipboard = async () => {
-    let clipText = '';
+  // Read clipboard helper
+  const readClipboardText = async (): Promise<string> => {
     try {
       const { invoke } = await import('@tauri-apps/api/core');
-      clipText = await invoke<string>('read_clipboard');
+      return await invoke<string>('read_clipboard');
     } catch {
       try {
-        clipText = await navigator.clipboard.readText();
+        return await navigator.clipboard.readText();
       } catch {
-        // clipboard access blocked
+        return '';
       }
     }
+  };
+
+  // Auto-paste on window focus when Auto-Clip is enabled
+  useEffect(() => {
+    if (!autoClip) return;
+    const handleFocus = async () => {
+      const clipText = await readClipboardText();
+      if (!clipText || !clipText.trim()) return;
+      if (clipText === lastAutoClipRef.current || clipText === rawTextRef.current) return;
+      lastAutoClipRef.current = clipText;
+      setRawText(clipText);
+      const newDetected = detectFormat(clipText);
+      const typeToUse = activeType === 'auto' ? newDetected.type : activeType;
+      pushHistory(clipText, typeToUse);
+      runFormat(clipText, typeToUse, true);
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [autoClip, activeType, pushHistory]);
+
+  // Paste from clipboard handler
+  const handlePasteClipboard = async () => {
+    const clipText = await readClipboardText();
 
     if (!clipText || !clipText.trim()) {
       sounds.playPop();
       return;
     }
 
+    lastAutoClipRef.current = clipText;
     setRawText(clipText);
     const newDetected = detectFormat(clipText);
     const typeToUse = activeType === 'auto' ? newDetected.type : activeType;
+    pushHistory(clipText, typeToUse);
     runFormat(clipText, typeToUse, true);
+  };
+
+  // Get active formatted string for Copy / Save
+  const getActiveOutputContent = () => {
+    if (effectiveType === 'json') return formattedJson || rawText;
+    if (effectiveType === 'sql') return formattedSql || rawText;
+    if (effectiveType === 'csv' && csvData) {
+      return [
+        csvData.headers.join(csvData.delimiter),
+        ...csvData.rows.map((r) => r.join(csvData.delimiter)),
+      ].join('\n');
+    }
+    return rawText;
   };
 
   // Copy result handler
   const handleCopyResult = async () => {
-    let contentToCopy = rawText;
-    if (effectiveType === 'json') {
-      contentToCopy = formattedJson || rawText;
-    } else if (effectiveType === 'sql') {
-      contentToCopy = formattedSql || rawText;
-    } else if (effectiveType === 'csv' && csvData) {
-      contentToCopy = [csvData.headers.join(csvData.delimiter), ...csvData.rows.map((r) => r.join(csvData.delimiter))].join('\n');
-    }
+    const contentToCopy = getActiveOutputContent();
 
     try {
       const { invoke } = await import('@tauri-apps/api/core');
@@ -181,6 +275,41 @@ export default function App() {
     sounds.playPop();
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  };
+
+  // Save result to file handler
+  const handleSaveFile = async () => {
+    const content = getActiveOutputContent();
+    if (!content.trim()) return;
+    const extMap: Record<FormatType, string> = {
+      auto: 'txt',
+      json: 'json',
+      sql: 'sql',
+      csv: 'csv',
+      jwt: 'txt',
+      text: 'txt',
+    };
+    const extension = extMap[effectiveType] || 'txt';
+
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      await invoke<string>('save_formatted_file', { content, extension });
+      sounds.playSuccess();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1800);
+    } catch {
+      // Browser Blob download fallback
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bongo_export.${extension}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      sounds.playSuccess();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1800);
+    }
   };
 
   // Load sample handler
@@ -219,6 +348,9 @@ export default function App() {
     const next = !isMuted;
     setIsMuted(next);
     sounds.setMuted(next);
+    try {
+      localStorage.setItem('bongo_format_muted', String(next));
+    } catch {}
     if (!next) {
       sounds.playPop();
     }
@@ -227,7 +359,25 @@ export default function App() {
   // Language toggle
   const handleToggleLang = () => {
     sounds.playPop();
-    setLang((prev) => (prev === 'ko' ? 'en' : 'ko'));
+    setLang((prev) => {
+      const next = prev === 'ko' ? 'en' : 'ko';
+      try {
+        localStorage.setItem('bongo_format_lang', next);
+      } catch {}
+      return next;
+    });
+  };
+
+  // Auto-Clip toggle
+  const handleToggleAutoClip = () => {
+    sounds.playPop();
+    setAutoClip((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('bongo_format_autoclip', String(next));
+      } catch {}
+      return next;
+    });
   };
 
   // Minify JSON
@@ -308,7 +458,10 @@ export default function App() {
         lang={lang}
         isFormatting={isFormatting}
         isFormatted={isFormatted}
-        onRunFormat={() => runFormat(rawText, effectiveType, true)}
+        onRunFormat={() => {
+          pushHistory(rawText, effectiveType);
+          runFormat(rawText, effectiveType, true);
+        }}
         bongoPaw={bongoPaw}
       />
 
@@ -324,11 +477,80 @@ export default function App() {
         detected={detected}
         onPasteClipboard={handlePasteClipboard}
         onCopyResult={handleCopyResult}
+        onSaveFile={handleSaveFile}
         onLoadSample={handleLoadSample}
         onClear={handleClear}
         copied={copied}
+        saved={saved}
+        autoClip={autoClip}
+        onToggleAutoClip={handleToggleAutoClip}
+        historyCount={history.length}
+        historyOpen={historyOpen}
+        onToggleHistory={() => {
+          sounds.playPop();
+          setHistoryOpen((prev) => !prev);
+        }}
         rawLength={rawText.length}
       />
+
+      {/* History Drawer */}
+      {historyOpen && (
+        <div className="bg-[#151621] border-b border-cat-border/80 px-3 py-2 max-h-44 overflow-y-auto shrink-0">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-bold text-purple-300 flex items-center gap-1.5">
+              <History className="w-3.5 h-3.5" /> {t.toolbar.history} ({history.length})
+            </span>
+            <div className="flex items-center gap-2">
+              {history.length > 0 && (
+                <button
+                  onClick={() => {
+                    sounds.playPop();
+                    setHistory([]);
+                  }}
+                  className="text-[10px] text-gray-400 hover:text-rose-400 flex items-center gap-1"
+                >
+                  <Trash2 className="w-3 h-3" /> {t.toolbar.clearHistory}
+                </button>
+              )}
+              <button
+                onClick={() => setHistoryOpen(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {history.length === 0 ? (
+            <div className="text-[11px] text-gray-500 py-2 text-center">
+              {t.toolbar.historyEmpty}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {history.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    sounds.playPop();
+                    setRawText(item.content);
+                    const target = activeType === 'auto' ? item.type : activeType;
+                    runFormat(item.content, target, true);
+                    setHistoryOpen(false);
+                  }}
+                  className="text-left p-2 rounded-lg bg-[#1d1f2e] hover:bg-[#26293d] border border-cat-border/70 flex items-center gap-2 transition"
+                >
+                  <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-mono text-[10px] uppercase font-bold shrink-0">
+                    {item.type}
+                  </span>
+                  <span className="text-[11px] font-mono text-gray-300 truncate">
+                    {item.preview}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 4. Main Viewer Area */}
       <main className="flex-1 flex flex-col overflow-hidden">

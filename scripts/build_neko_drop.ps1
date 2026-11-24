@@ -1,4 +1,4 @@
-# PowerShell Release Build Script for Neko Drop
+﻿# PowerShell Release Build Script for Neko Drop
 $ErrorActionPreference = "Stop"
 
 Write-Host "===================================================" -ForegroundColor Cyan
@@ -13,6 +13,18 @@ npm run build
 
 Write-Host "`n[2/3] Tauri 릴리즈 패키징 빌드 (최적화 적용)..." -ForegroundColor Yellow
 npm run tauri build
+
+$ReleaseExe = Join-Path $AppDir "src-tauri\target\release\neko-drop.exe"
+$PortableDir = Join-Path $PSScriptRoot "..\portable"
+$WebDownloadsDir = Join-Path $PSScriptRoot "..\apps\web\public\downloads"
+
+if (-not (Test-Path $PortableDir)) { New-Item -ItemType Directory -Path $PortableDir | Out-Null }
+if (-not (Test-Path $WebDownloadsDir)) { New-Item -ItemType Directory -Path $WebDownloadsDir | Out-Null }
+
+if (Test-Path $ReleaseExe) {
+    Copy-Item $ReleaseExe (Join-Path $PortableDir "Neko Drop.exe") -Force
+    Copy-Item $ReleaseExe (Join-Path $WebDownloadsDir "Neko Drop.exe") -Force
+}
 
 $BundleDir = Join-Path $AppDir "src-tauri\target\release\bundle"
 Write-Host "`n===================================================" -ForegroundColor Green
